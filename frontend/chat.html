@@ -117,10 +117,13 @@
                 <div class="section-header">
                     <h2>历史记录</h2>
                     <div class="filter-controls">
-                        <select id="historyFilter" class="filter-select">
+                        <select id="historyFilter" class="filter-select" onchange="loadHistory()">
                             <option value="all">全部记录</option>
-                            <option value="appointments">预约记录</option>
-                            <option value="chat">聊天记录</option>
+                            <option value="pending">待处理</option>
+                            <option value="approved">已确认</option>
+                            <option value="completed">已完成</option>
+                            <option value="rejected">已拒绝</option>
+                            <option value="cancelled">已取消</option>
                         </select>
                     </div>
                 </div>
@@ -282,6 +285,11 @@
                     button.classList.add('active');
                 }
             });
+            
+            // 如果切换到历史记录，加载数据
+            if (sectionName === 'history') {
+                loadHistory();
+            }
         }
 
         function showAppointmentTab(tabName) {
@@ -697,6 +705,134 @@
         function refreshData() {
             loadAppointments();
             alert('数据已刷新');
+        }
+
+        // 加载历史记录
+        async function loadHistory() {
+            const historyList = document.getElementById('historyList');
+            const filterSelect = document.getElementById('historyFilter');
+            const filterValue = filterSelect.value;
+            const userRole = getUserRole();
+            
+            historyList.innerHTML = '<div class="loading">正在加载历史记录...</div>';
+            
+            try {
+                // 根据筛选条件加载数据
+                let url = '/api/schedule/appointments';
+                if (filterValue !== 'all') {
+                    url += `?status=${filterValue}`;
+                }
+                
+                console.log('加载历史记录，URL:', url);
+                const response = await API.get(url, {
+                    headers: { 
+                        'Authorization': `Bearer ${Auth.state.access}`
+                    }
+                });
+                
+                let appointments = response.appointments || [];
+                console.log('历史记录数据:', appointments);
+                
+                // 按日期排序（最新的在前）
+                appointments.sort((a, b) => {
+                    const dateA = new Date(a.appointment_date + ' ' + a.time_slot.split('-')[0]);
+                    const dateB = new Date(b.appointment_date + ' ' + b.time_slot.split('-')[0]);
+                    return dateB - dateA;
+                });
+                
+                if (appointments.length === 0) {
+                    historyList.innerHTML = `
+                        <div class="empty-state">
+                            <div style="font-size: 48px; margin-bottom: 16px;">📋</div>
+                            <p style="font-size: 16px; color: #666;">暂无历史记录</p>
+                            <p style="font-size: 14px; color: #999; margin-top: 8px;">您的预约记录将显示在这里</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // 渲染历史记录
+                historyList.innerHTML = appointments.map(appointment => {
+                    const appointmentDate = new Date(appointment.appointment_date);
+                    const now = new Date();
+                    const isPast = appointmentDate < now;
+                    const isToday = appointmentDate.toDateString() === now.toDateString();
+                    
+                    let dateLabel = appointment.appointment_date;
+                    if (isToday) {
+                        dateLabel = '今天 ' + appointment.appointment_date;
+                    } else if (isPast) {
+                        dateLabel = appointment.appointment_date + ' (已过期)';
+                    }
+                    
+                    // 根据用户角色显示不同的标题
+                    let title = '';
+                    let subtitle = '';
+                    if (userRole === '老师') {
+                        title = `与 ${appointment.student?.name || '未知学生'} 的预约`;
+                        subtitle = `学号: ${appointment.student?.student_id || '未设置'}`;
+                    } else {
+                        title = `与 ${appointment.teacher?.name || '未知老师'} 的预约`;
+                        subtitle = `预约类型: ${appointment.appointment_type}`;
+                    }
+                    
+                    return `
+                        <div class="history-card ${isPast ? 'past' : ''}">
+                            <div class="history-header">
+                                <div class="history-info">
+                                    <h4>${title}</h4>
+                                    <p class="history-subtitle">${subtitle}</p>
+                                </div>
+                                <div class="history-status">
+                                    <span class="status-badge status-${appointment.status}">
+                                        ${getStatusText(appointment.status)}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="history-details">
+                                <div class="detail-row">
+                                    <span class="detail-icon">📅</span>
+                                    <span class="detail-label">日期：</span>
+                                    <span class="detail-value">${dateLabel}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-icon">🕐</span>
+                                    <span class="detail-label">时间：</span>
+                                    <span class="detail-value">${appointment.time_slot}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-icon">📝</span>
+                                    <span class="detail-label">类型：</span>
+                                    <span class="detail-value">${appointment.appointment_type}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-icon">💬</span>
+                                    <span class="detail-label">原因：</span>
+                                    <span class="detail-value">${appointment.reason || '无'}</span>
+                                </div>
+                                ${appointment.created_at ? `
+                                <div class="detail-row">
+                                    <span class="detail-icon">⏰</span>
+                                    <span class="detail-label">创建时间：</span>
+                                    <span class="detail-value">${new Date(appointment.created_at).toLocaleString('zh-CN')}</span>
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                console.error('加载历史记录失败:', error);
+                historyList.innerHTML = `
+                    <div class="empty-state">
+                        <div style="font-size: 48px; margin-bottom: 16px;">❌</div>
+                        <p style="font-size: 16px; color: #e74c3c;">加载历史记录失败</p>
+                        <p style="font-size: 14px; color: #999; margin-top: 8px;">${error.message || '请稍后重试'}</p>
+                        <button class="button primary" onclick="loadHistory()" style="margin-top: 16px;">重新加载</button>
+                    </div>
+                `;
+            }
         }
 
         // 回车发送消息

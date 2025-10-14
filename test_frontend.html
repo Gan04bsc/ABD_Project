@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试历史记录功能</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            margin: 5px;
+        }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.info { background: #d1ecf1; color: #0c5460; }
+        .status.warning { background: #fff3cd; color: #856404; }
+        .button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .result {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .step {
+            margin: 20px 0;
+            padding: 15px;
+            border-left: 4px solid #007bff;
+            background: #f8f9fa;
+        }
+        .emoji {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-card">
+        <h1>📋 历史记录功能测试</h1>
+        <p>这个页面用于测试师生交流模块的历史记录功能</p>
+        
+        <div class="step">
+            <h3><span class="emoji">1️⃣</span>确保后端服务运行</h3>
+            <p>后端服务应该运行在: <code>http://127.0.0.1:5000</code></p>
+            <button class="button" onclick="checkBackend()">检查后端状态</button>
+            <div id="backendResult" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="step">
+            <h3><span class="emoji">2️⃣</span>测试API</h3>
+            <p>测试预约API是否正常工作</p>
+            <button class="button" onclick="testAPI()">测试API</button>
+            <div id="apiResult" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="step">
+            <h3><span class="emoji">3️⃣</span>打开前端页面</h3>
+            <p>在浏览器中打开师生交流页面进行测试</p>
+            <button class="button" onclick="openFrontend()">打开前端页面</button>
+        </div>
+
+        <div class="step">
+            <h3><span class="emoji">✅</span>测试步骤</h3>
+            <ol>
+                <li>使用学生账号登录：<code>1634864783@qq.com</code> / <code>123456</code></li>
+                <li>进入"师生互动交流"模块</li>
+                <li>点击左侧导航栏的"📋 历史记录"</li>
+                <li>应该看到10条预约记录</li>
+                <li>尝试使用筛选器切换不同状态</li>
+                <li>验证记录按日期排序</li>
+                <li>验证过期预约显示为灰色</li>
+            </ol>
+        </div>
+
+        <div class="step">
+            <h3><span class="emoji">📊</span>预期结果</h3>
+            <div>
+                <span class="status success">✅ 已确认: 6条</span>
+                <span class="status info">✅ 已完成: 1条</span>
+                <span class="status warning">❌ 已拒绝: 2条</span>
+                <span class="status">🚫 已取消: 1条</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function checkBackend() {
+            const resultDiv = document.getElementById('backendResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '正在检查后端服务...';
+            
+            try {
+                const response = await fetch('http://127.0.0.1:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: '1634864783@qq.com',
+                        password: '123456'
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.textContent = '✅ 后端服务正常运行！\n\n' + 
+                        `登录成功: ${data.user_info.name}\n` +
+                        `用户ID: ${data.user_info.id}\n` +
+                        `角色: ${data.user_info.role}`;
+                } else {
+                    resultDiv.textContent = '❌ 后端服务响应异常\n\n' + await response.text();
+                }
+            } catch (error) {
+                resultDiv.textContent = '❌ 无法连接到后端服务\n\n' + 
+                    '请确保后端服务正在运行:\n' +
+                    'cd backend && python wsgi.py\n\n' +
+                    '错误信息: ' + error.message;
+            }
+        }
+
+        async function testAPI() {
+            const resultDiv = document.getElementById('apiResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '正在测试API...';
+            
+            try {
+                // 先登录获取token
+                const loginResponse = await fetch('http://127.0.0.1:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: '1634864783@qq.com',
+                        password: '123456'
+                    })
+                });
+                
+                if (!loginResponse.ok) {
+                    throw new Error('登录失败');
+                }
+                
+                const loginData = await loginResponse.json();
+                const token = loginData.access_token;
+                
+                // 获取预约记录
+                const appointmentsResponse = await fetch('http://127.0.0.1:5000/api/schedule/appointments', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!appointmentsResponse.ok) {
+                    throw new Error('获取预约记录失败');
+                }
+                
+                const appointmentsData = await appointmentsResponse.json();
+                const appointments = appointmentsData.appointments;
+                
+                // 统计各状态数量
+                const statusCount = {
+                    pending: 0,
+                    approved: 0,
+                    completed: 0,
+                    rejected: 0,
+                    cancelled: 0
+                };
+                
+                appointments.forEach(apt => {
+                    if (statusCount.hasOwnProperty(apt.status)) {
+                        statusCount[apt.status]++;
+                    }
+                });
+                
+                resultDiv.textContent = '✅ API测试成功！\n\n' +
+                    `总记录数: ${appointments.length}\n\n` +
+                    `状态统计:\n` +
+                    `  待处理: ${statusCount.pending} 条\n` +
+                    `  已确认: ${statusCount.approved} 条\n` +
+                    `  已完成: ${statusCount.completed} 条\n` +
+                    `  已拒绝: ${statusCount.rejected} 条\n` +
+                    `  已取消: ${statusCount.cancelled} 条\n\n` +
+                    `最近3条记录:\n` +
+                    appointments.slice(0, 3).map((apt, i) => 
+                        `  ${i+1}. ${apt.appointment_date} ${apt.time_slot} - ${apt.status}`
+                    ).join('\n');
+                
+            } catch (error) {
+                resultDiv.textContent = '❌ API测试失败\n\n错误信息: ' + error.message;
+            }
+        }
+
+        function openFrontend() {
+            window.open('frontend/chat.html', '_blank');
+        }
+    </script>
+</body>
+</html>
+

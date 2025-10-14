@@ -1311,6 +1311,91 @@ textarea.form-input:focus {
     cursor: pointer;
 }
 
+/* 历史记录卡片样式 */
+.history-card {
+    background: white;
+    border: 2px solid #f0f0f0;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+}
+
+.history-card:hover {
+    border-color: #667eea;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.history-card.past {
+    opacity: 0.7;
+    background: #f8f9fa;
+}
+
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.history-info h4 {
+    margin: 0 0 5px 0;
+    font-size: 18px;
+    color: #2c3e50;
+}
+
+.history-subtitle {
+    margin: 0;
+    font-size: 14px;
+    color: #6c757d;
+}
+
+.history-status {
+    flex-shrink: 0;
+}
+
+.history-details {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.detail-row {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.detail-icon {
+    font-size: 16px;
+    margin-right: 8px;
+    width: 20px;
+    text-align: center;
+}
+
+.detail-label {
+    font-weight: 500;
+    color: #495057;
+    margin-right: 8px;
+    min-width: 80px;
+}
+
+.detail-value {
+    color: #6c757d;
+    flex: 1;
+}
+
+.loading {
+    text-align: center;
+    padding: 40px;
+    color: #6c757d;
+    font-size: 16px;
+}
+
 /* 响应式设计 */
 @media (max-width: 1024px) {
     .chat-sidebar {
