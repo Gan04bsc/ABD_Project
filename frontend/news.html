@@ -17,24 +17,21 @@
     
     <main>
         <section>
-            <h2>最新留学信息</h2>
-            <div id="news-list">
-                <div class="news-item" style="border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px;">
-                    <h3>美国大学申请截止日期提醒</h3>
-                    <p class="news-date">2024-01-15</p>
-                    <p>大部分美国大学的申请截止日期为1月15日，请同学们抓紧时间提交申请材料。</p>
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                <h2 style="margin:0;">最新留学信息</h2>
+                <button id="open-publish" class="button" style="display:none;" onclick="togglePublish(true)">✍️ 发布信息</button>
+            </div>
+            <div id="publish-panel" style="display:none; background:#fafafa; border:1px solid #eee; padding:12px; border-radius:8px; margin-top:12px;">
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <input id="news-title" type="text" placeholder="标题（必填）" style="flex:0 0 280px; padding:8px;">
+                    <textarea id="news-content" placeholder="内容（必填）" rows="3" style="flex:1; padding:8px;"></textarea>
                 </div>
-                <div class="news-item" style="border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px;">
-                    <h3>英国签证政策更新</h3>
-                    <p class="news-date">2024-01-10</p>
-                    <p>英国政府宣布新的学生签证政策，简化了申请流程，提高了通过率。</p>
-                </div>
-                <div class="news-item" style="border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px;">
-                    <h3>加拿大留学奖学金申请</h3>
-                    <p class="news-date">2024-01-08</p>
-                    <p>加拿大各大学开始接受2024年秋季入学的奖学金申请，截止日期为3月1日。</p>
+                <div style="margin-top:8px; display:flex; gap:8px;">
+                    <button class="button" onclick="publishNews()">发布</button>
+                    <button class="button" onclick="togglePublish(false)">取消</button>
                 </div>
             </div>
+            <div id="news-list" style="margin-top:12px;"></div>
         </section>
     </main>
 
@@ -52,13 +49,90 @@
 
         // 页面加载时获取最新信息
         document.addEventListener('DOMContentLoaded', async function() {
-            try {
-                // 这里可以调用API获取最新的留学信息
-                console.log('加载留学信息...');
-            } catch (err) {
-                console.error('加载信息失败:', err);
+            const isTeacher = Auth.state.role === 'teacher' || (Auth.state.userInfo && Auth.state.userInfo.role === 'teacher');
+            if (isTeacher) {
+                document.getElementById('open-publish').style.display = 'inline-block';
             }
+            await loadNews();
         });
+
+        function togglePublish(show) {
+            document.getElementById('publish-panel').style.display = show ? 'block' : 'none';
+        }
+
+        async function loadNews() {
+            const list = document.getElementById('news-list');
+            list.innerHTML = '<div style="padding:12px; color:#666;">加载中...</div>';
+            try {
+                const items = await API.get('/api/news');
+                if (!Array.isArray(items) || items.length === 0) {
+                    list.innerHTML = '<div style="padding:24px; color:#888; text-align:center;">暂无信息</div>';
+                    return;
+                }
+                list.innerHTML = items.map(n => `
+                    <div class="news-item" style="border: 1px solid #eee; padding: 14px; margin: 10px 0; border-radius: 8px; background:#fff;">
+                        <h3 style="margin:0 0 6px;">${escapeHTML(n.title)}</h3>
+                        <div style="color:#999; font-size:12px; margin-bottom:8px;">
+                            ${n.author_name ? `<span>发布人：${escapeHTML(n.author_name)}</span> · ` : ''}
+                            <span>发布于 ${formatDate(n.created_at)}</span>
+                            ${n.updated_at && n.updated_at !== n.created_at ? ` · <span>更新于 ${formatDate(n.updated_at)}</span>` : ''}
+                        </div>
+                        <div style="white-space:pre-wrap; line-height:1.6;">${escapeHTML(n.content)}</div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                list.innerHTML = `<div style="padding:12px; color:#e74c3c;">加载失败：${err.message || '请稍后重试'}</div>`;
+            }
+        }
+
+        async function publishNews() {
+            const titleEl = document.getElementById('news-title');
+            const contentEl = document.getElementById('news-content');
+            const title = titleEl.value.trim();
+            const content = contentEl.value.trim();
+            
+            console.log('准备发布:', { title, content });
+            
+            if (!title || !content) {
+                alert('请填写标题和内容');
+                return;
+            }
+            
+            if (!Auth.state.access) {
+                alert('未登录或登录已过期，请重新登录');
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            try {
+                console.log('发送请求到 /api/news');
+                const result = await API.post('/api/news', { title, content }, {
+                    headers: { Authorization: `Bearer ${Auth.state.access}` },
+                });
+                console.log('发布成功:', result);
+                titleEl.value = '';
+                contentEl.value = '';
+                togglePublish(false);
+                await loadNews();
+                alert('发布成功！');
+            } catch (err) {
+                console.error('发布失败:', err);
+                const errorMsg = err.error || err.message || '发布失败，请稍后重试';
+                alert('发布失败：' + errorMsg);
+            }
+        }
+
+        function formatDate(iso) {
+            try { return new Date(iso).toLocaleString('zh-CN'); } catch { return iso || ''; }
+        }
+        function escapeHTML(str) {
+            return (str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
     </script>
 </body>
 </html>

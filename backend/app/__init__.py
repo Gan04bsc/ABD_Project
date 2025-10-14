@@ -16,6 +16,7 @@ def register_blueprints(app: Flask) -> None:
     from .blueprints.reco_letters import bp as reco_letters_bp
     from .blueprints.schools import bp as schools_bp
     from .blueprints.events import bp as events_bp
+    from .blueprints.news import bp as news_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(users_bp)
@@ -25,6 +26,7 @@ def register_blueprints(app: Flask) -> None:
     app.register_blueprint(reco_letters_bp)
     app.register_blueprint(schools_bp)
     app.register_blueprint(events_bp)
+    app.register_blueprint(news_bp)
 
 
 def create_app(config_name: str | None = None) -> Flask:

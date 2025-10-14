@@ -4,6 +4,7 @@ from .school import School
 from .application import Application
 from .message import Message
 from .appointment import Appointment
+from .news import News
 
 __all__ = [
     "User",
@@ -12,4 +13,5 @@ __all__ = [
     "Application",
     "Message",
     "Appointment",
+    "News",
 ]

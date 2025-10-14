@@ -50,3 +50,14 @@ python backend\wsgi.py
 - POST /api/auth/login { email, password } -> 200 { access_token, refresh_token }
 - POST /api/auth/refresh (Authorization: Bearer <refresh>) -> 200 { access_token }
 - GET /api/users/me (Authorization: Bearer <access>) -> 200 身份信息
+
+## 留学信息发布（News）
+- GET /api/news -> 列出所有发布（按时间倒序）
+- POST /api/news { title, content } (Authorization: Bearer <access, teacher>) -> 201 创建
+- GET /api/news/<id> -> 查看单条
+- PUT/PATCH /api/news/<id> { title?, content? } (Authorization: Bearer <access, teacher>) -> 200 更新
+- DELETE /api/news/<id> (Authorization: Bearer <access, teacher>) -> 200 删除
+
+前端 `news.html`：
+- 学生：只能查看列表
+- 老师：可见“发布信息”按钮，填写标题与内容后发布
