@@ -16,11 +16,15 @@ const API = {
       const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.error || data.message || '请求失败');
+        const error = new Error(data.error || data.message || '请求失败');
+        error.error = data.error || data.message || '请求失败';
+        error.data = data;
+        throw error;
       }
       
       return data;
     } catch (err) {
+      if (err.error) throw err;
       if (err.message) throw err;
       throw new Error('网络请求失败');
     }
@@ -40,6 +44,14 @@ const API = {
   
   put(path, body = null, options = {}) {
     const config = { method: 'PUT', ...options };
+    if (body !== null) {
+      config.body = JSON.stringify(body);
+    }
+    return this.request(path, config);
+  },
+  
+  patch(path, body = null, options = {}) {
+    const config = { method: 'PATCH', ...options };
     if (body !== null) {
       config.body = JSON.stringify(body);
     }

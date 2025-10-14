@@ -143,21 +143,21 @@
                 <form id="appointmentForm">
                     <div class="form-group">
                         <label for="teacherSelect">选择老师</label>
-                        <select id="teacherSelect" name="teacherSelect" class="form-input" required>
+                        <select id="teacherSelect" name="teacherSelect" class="form-input" required onchange="updateAvailableSlots()">
                             <option value="">请选择老师</option>
-                            <option value="teacher@test.com">吴老师 - 数据科学与人工智能</option>
+                            <option value="teacher@test.com" data-teacher-id="3">吴老师 - 数据科学与人工智能</option>
                         </select>
                     </div>
                     
                     <div class="form-group">
                         <label for="appointmentDate">预约日期</label>
-                        <input type="date" id="appointmentDate" name="appointmentDate" class="form-input" required>
+                        <input type="date" id="appointmentDate" name="appointmentDate" class="form-input" required onchange="updateAvailableSlots()">
                     </div>
                     
                     <div class="form-group">
                         <label for="appointmentTime">预约时间</label>
                         <select id="appointmentTime" name="appointmentTime" class="form-input" required>
-                            <option value="">请选择时间</option>
+                            <option value="">请先选择老师和日期</option>
                             <option value="09:00-10:00">09:00-10:00</option>
                             <option value="10:00-11:00">10:00-11:00</option>
                             <option value="11:00-12:00">11:00-12:00</option>
@@ -165,6 +165,7 @@
                             <option value="15:00-16:00">15:00-16:00</option>
                             <option value="16:00-17:00">16:00-17:00</option>
                         </select>
+                        <small id="bookedSlotsInfo" style="color: #666; display: block; margin-top: 5px;"></small>
                     </div>
                     
                     <div class="form-group">
@@ -311,78 +312,59 @@
             return labelMap[status] || status;
         }
 
-        function loadAppointments(status = 'pending') {
+        async function loadAppointments(status = 'pending') {
             const appointmentsList = document.getElementById('appointmentsList');
             const userRole = getUserRole();
             
-            // 从本地存储加载预约数据
-            let appointments = JSON.parse(localStorage.getItem('appointments') || '[]');
+            // 从后端API加载预约数据
+            let appointments = [];
             
-            // 如果没有预约数据，添加一些测试数据（仅用于演示）
-            if (appointments.length === 0 && userRole === '老师') {
-                appointments = [
-                    {
-                        id: 1,
-                        teacher: '吴老师',
-                        subject: '数据科学与人工智能',
-                        date: '2024-01-15',
-                        time: '14:00-15:00',
-                        type: '学术咨询',
-                        reason: '关于机器学习算法的疑问',
-                        status: 'pending',
-                        student: {
-                            name: '张三',
-                            student_id: '2021001',
-                            grade: '2021级',
-                            class_name: '数据科学与人工智能2021级1班',
-                            email: 'zhangsan@test.com'
-                        }
-                    },
-                    {
-                        id: 2,
-                        teacher: '吴老师',
-                        subject: '数据科学与人工智能',
-                        date: '2024-01-16',
-                        time: '10:00-11:00',
-                        type: '课程讨论',
-                        reason: '讨论期末项目方案',
-                        status: 'approved',
-                        student: {
-                            name: '李四',
-                            student_id: '2021002',
-                            grade: '2021级',
-                            class_name: '数据科学与人工智能2021级1班',
-                            email: 'lisi@test.com'
-                        }
+            try {
+                console.log('正在加载预约数据，token:', Auth.state.access ? '已存在' : '未找到');
+                const response = await API.get(`/api/schedule/appointments?status=${status}`, {
+                    headers: { 
+                        'Authorization': `Bearer ${Auth.state.access}`
                     }
-                ];
-                localStorage.setItem('appointments', JSON.stringify(appointments));
-            }
-            
-            // 调试信息：输出预约数据
-            console.log('当前用户角色:', userRole);
-            console.log('本地存储的预约数据:', appointments);
-            
-            if (userRole === '老师') {
-                // 老师端：显示所有学生的预约申请
-                // 不需要过滤，显示所有预约
-                console.log('老师端：显示所有预约申请');
-            } else {
-                // 学生端：不显示预约管理功能，学生应该通过其他方式发起预约
-                // 学生端主要功能是发起预约，而不是查看预约
-                console.log('学生端：学生不应该在预约管理页面查看预约');
-                appointments = []; // 学生端不显示预约列表
+                });
+                
+                appointments = response.appointments || [];
+                console.log('从后端加载的预约数据:', appointments);
+            } catch (error) {
+                console.error('加载预约数据失败:', error);
+                console.error('错误详情:', error.message, error.data);
+                
+                // 如果是认证错误，尝试刷新token
+                if (error.message && error.message.includes('401')) {
+                    console.log('认证失败，请重新登录');
+                }
+                
+                appointmentsList.innerHTML = `
+                    <div class="empty-state">
+                        <p>加载预约数据失败: ${error.message || '请稍后重试'}</p>
+                    </div>
+                `;
+                return;
             }
 
-            const filteredAppointments = appointments.filter(apt => apt.status === status);
+            const filteredAppointments = appointments;
+            
+            // 如果没有预约数据，显示空状态
+            if (filteredAppointments.length === 0) {
+                appointmentsList.innerHTML = `
+                    <div class="empty-state">
+                        <p>暂无${getTabLabel(status)}的预约</p>
+                    </div>
+                `;
+                return;
+            }
             
             appointmentsList.innerHTML = filteredAppointments.map(appointment => {
                 // 根据用户角色显示不同的标题
                 let title = '';
                 if (userRole === '老师') {
-                    title = `${appointment.student.name} 的预约申请 - ${appointment.subject}`;
+                    title = `${appointment.student?.name || '未知学生'} 的预约申请 - ${appointment.appointment_type}`;
                 } else {
-                    title = `${appointment.teacher} - ${appointment.subject}`;
+                    title = `${appointment.teacher?.name || '未知老师'} - ${appointment.appointment_type}`;
                 }
                 
                 return `
@@ -391,9 +373,9 @@
                         <div class="appointment-info">
                             <h4>${title}</h4>
                             <div class="appointment-meta">
-                                <span class="appointment-date">📅 ${appointment.date}</span>
-                                <span class="appointment-time">🕐 ${appointment.time}</span>
-                                <span class="appointment-type">📝 ${appointment.type}</span>
+                                <span class="appointment-date">📅 ${appointment.appointment_date}</span>
+                                <span class="appointment-time">🕐 ${appointment.time_slot}</span>
+                                <span class="appointment-type">📝 ${appointment.appointment_type}</span>
                             </div>
                         </div>
                         <div class="appointment-status">
@@ -403,8 +385,8 @@
                         </div>
                     </div>
                     <div class="appointment-content">
-                        <p><strong>预约原因：</strong>${appointment.reason}</p>
-                        ${userRole === '老师' ? `
+                        <p><strong>预约原因：</strong>${appointment.reason || '无'}</p>
+                        ${userRole === '老师' && appointment.student ? `
                 <div class="student-info">
                     <h5>学生信息</h5>
                     <div class="student-details">
@@ -430,7 +412,8 @@
                 'pending': '待处理',
                 'approved': '已确认',
                 'completed': '已完成',
-                'rejected': '已拒绝'
+                'rejected': '已拒绝',
+                'cancelled': '已取消'
             };
             return statusMap[status] || status;
         }
@@ -475,6 +458,10 @@
                     return `
                         <span class="completed-text">✅ 已完成</span>
                     `;
+                } else if (status === 'cancelled') {
+                    return `
+                        <span class="cancelled-text">🚫 已取消</span>
+                    `;
                 }
             }
             
@@ -483,116 +470,179 @@
 
         function showNewAppointment() {
             document.getElementById('appointmentModal').style.display = 'flex';
+            // 设置最小日期为今天
+            const today = new Date().toISOString().split('T')[0]
+            document.getElementById('appointmentDate').setAttribute('min', today)
         }
 
         function closeAppointmentModal() {
             document.getElementById('appointmentModal').style.display = 'none';
             document.getElementById('appointmentForm').reset();
+            document.getElementById('bookedSlotsInfo').textContent = ''
+        }
+
+        // 获取并更新可用时间段
+        async function updateAvailableSlots() {
+            const teacherSelect = document.getElementById('teacherSelect')
+            const dateInput = document.getElementById('appointmentDate')
+            const timeSelect = document.getElementById('appointmentTime')
+            const infoElement = document.getElementById('bookedSlotsInfo')
+            
+            const teacherId = teacherSelect.selectedOptions[0]?.getAttribute('data-teacher-id')
+            const selectedDate = dateInput.value
+            
+            // 重置时间选择
+            const timeOptions = timeSelect.querySelectorAll('option:not(:first-child)')
+            timeOptions.forEach(option => {
+                option.disabled = false
+                option.style.color = ''
+            })
+            infoElement.textContent = ''
+            
+            if (!teacherId || !selectedDate) {
+                timeSelect.options[0].text = '请先选择老师和日期'
+                return
+            }
+            
+            timeSelect.options[0].text = '请选择时间'
+            
+            try {
+                const response = await API.get(`/api/schedule/booked-slots/${teacherId}?date=${selectedDate}`)
+                const bookedSlots = response.booked_slots || []
+                
+                if (bookedSlots.length > 0) {
+                    infoElement.textContent = `已被预约的时间段: ${bookedSlots.join(', ')}`
+                    infoElement.style.color = '#e74c3c'
+                    
+                    // 禁用已预约的时间段
+                    timeOptions.forEach(option => {
+                        if (bookedSlots.includes(option.value)) {
+                            option.disabled = true
+                            option.style.color = '#ccc'
+                            option.text = option.value + ' (已被预约)'
+                        } else {
+                            option.text = option.value
+                        }
+                    })
+                } else {
+                    infoElement.textContent = '所有时间段可用'
+                    infoElement.style.color = '#27ae60'
+                }
+            } catch (error) {
+                console.error('获取已预约时间段失败:', error)
+                infoElement.textContent = '获取时间段信息失败'
+                infoElement.style.color = '#e74c3c'
+            }
         }
 
         async function submitAppointment() {
-            const form = document.getElementById('appointmentForm');
-            const formData = new FormData(form);
+            const form = document.getElementById('appointmentForm')
+            const formData = new FormData(form)
             
             // 验证表单
             if (!form.checkValidity()) {
-                alert('请填写所有必填字段');
-                return;
+                alert('请填写所有必填字段')
+                return
             }
             
-            // 从后端获取最新的用户信息
-            let currentUser = Auth.state.userInfo;
+            const teacherSelect = document.getElementById('teacherSelect')
+            const teacherId = teacherSelect.selectedOptions[0]?.getAttribute('data-teacher-id')
+            
+            if (!teacherId) {
+                alert('请选择老师')
+                return
+            }
+            
+            // 准备提交数据
+            const appointmentData = {
+                teacher_id: parseInt(teacherId),
+                appointment_date: formData.get('appointmentDate'),
+                time_slot: formData.get('appointmentTime'),
+                appointment_type: formData.get('appointmentType'),
+                reason: formData.get('appointmentReason')
+            }
+            
             try {
-                const userInfo = await API.get('/api/users/me', {
-                    headers: { Authorization: `Bearer ${Auth.state.access}` }
-                });
-                currentUser = userInfo;
-                // 更新本地存储的用户信息
-                Auth.setTokens({ user_info: userInfo });
-            } catch (err) {
-                console.log('获取最新用户信息失败，使用缓存的用户信息:', err);
+                const response = await API.post('/api/schedule/book', appointmentData, {
+                    headers: { 
+                        'Authorization': `Bearer ${Auth.state.access}`,
+                        'Content-Type': 'application/json'
+                    }
+                })
+                
+                alert('预约申请已提交，等待老师确认')
+                closeAppointmentModal()
+                loadAppointments()
+            } catch (error) {
+                console.error('提交预约失败:', error)
+                if (error.error === '该时间段已被预约') {
+                    alert('该时间段已被其他同学预约，请选择其他时间')
+                    updateAvailableSlots() // 刷新可用时间段
+                } else {
+                    alert(error.error || '提交预约失败，请稍后重试')
+                }
             }
-            
-            const studentInfo = {
-                name: currentUser.name || '未设置',
-                student_id: currentUser.student_id || '未设置',
-                grade: currentUser.grade || '未设置',
-                class_name: currentUser.class_name || '未设置',
-                email: currentUser.email || '未设置'
-            };
-            
-            // 调试信息：输出学生信息
-            console.log('提交预约时的用户信息:', currentUser);
-            console.log('提交预约时的学生信息:', studentInfo);
-            
-            // 创建新的预约申请
-            const newAppointment = {
-                id: Date.now(),
-                teacher: '吴老师',
-                subject: '数据科学与人工智能',
-                date: formData.get('appointmentDate'),
-                time: formData.get('appointmentTime'),
-                type: formData.get('appointmentType'),
-                reason: formData.get('appointmentReason'),
-                status: 'pending',
-                student: studentInfo
-            };
-            
-            // 保存预约申请到本地存储
-            let appointments = JSON.parse(localStorage.getItem('appointments') || '[]');
-            appointments.push(newAppointment);
-            localStorage.setItem('appointments', JSON.stringify(appointments));
-            
-            // 调试信息：输出保存的预约数据
-            console.log('保存的预约数据:', newAppointment);
-            console.log('所有预约数据:', appointments);
-            
-            alert('预约申请已提交，等待吴老师确认');
-            closeAppointmentModal();
-            loadAppointments();
         }
 
-        function approveAppointment(appointmentId) {
+        async function approveAppointment(appointmentId) {
             if (confirm('确认接受此预约申请？')) {
-                let appointments = JSON.parse(localStorage.getItem('appointments') || '[]')
-                const index = appointments.findIndex(apt => apt.id === appointmentId)
-                if (index !== -1) {
-                    appointments[index].status = 'approved'
-                    localStorage.setItem('appointments', JSON.stringify(appointments))
-                    alert('预约已确认')
-                    loadAppointments('pending')
-                } else {
-                    alert('未找到该预约')
+                try {
+                    await API.patch(`/api/schedule/appointments/${appointmentId}`, 
+                        { status: 'approved' },
+                        {
+                            headers: { 
+                                'Authorization': `Bearer ${Auth.state.access}`,
+                                'Content-Type': 'application/json'
+                            }
+                        }
+                    );
+                    alert('预约已确认');
+                    loadAppointments('pending');
+                } catch (error) {
+                    console.error('确认预约失败:', error);
+                    alert(error.error || '确认预约失败，请稍后重试');
                 }
             }
         }
 
-        function rejectAppointment(appointmentId) {
+        async function rejectAppointment(appointmentId) {
             if (confirm('确认拒绝此预约申请？')) {
-                let appointments = JSON.parse(localStorage.getItem('appointments') || '[]')
-                const index = appointments.findIndex(apt => apt.id === appointmentId)
-                if (index !== -1) {
-                    appointments[index].status = 'rejected'
-                    localStorage.setItem('appointments', JSON.stringify(appointments))
-                    alert('预约已拒绝')
-                    loadAppointments('pending')
-                } else {
-                    alert('未找到该预约')
+                try {
+                    await API.patch(`/api/schedule/appointments/${appointmentId}`, 
+                        { status: 'rejected' },
+                        {
+                            headers: { 
+                                'Authorization': `Bearer ${Auth.state.access}`,
+                                'Content-Type': 'application/json'
+                            }
+                        }
+                    );
+                    alert('预约已拒绝');
+                    loadAppointments('pending');
+                } catch (error) {
+                    console.error('拒绝预约失败:', error);
+                    alert(error.error || '拒绝预约失败，请稍后重试');
                 }
             }
         }
 
-        function completeAppointment(appointmentId) {
+        async function completeAppointment(appointmentId) {
             if (confirm('确认标记此预约为已完成？')) {
-                let appointments = JSON.parse(localStorage.getItem('appointments') || '[]')
-                const index = appointments.findIndex(apt => apt.id === appointmentId)
-                if (index !== -1) {
-                    appointments[index].status = 'completed'
-                    localStorage.setItem('appointments', JSON.stringify(appointments))
-                    alert('预约已标记为完成')
-                    loadAppointments('approved')
-                } else {
-                    alert('未找到该预约')
+                try {
+                    await API.patch(`/api/schedule/appointments/${appointmentId}`, 
+                        { status: 'completed' },
+                        {
+                            headers: { 
+                                'Authorization': `Bearer ${Auth.state.access}`,
+                                'Content-Type': 'application/json'
+                            }
+                        }
+                    );
+                    alert('预约已标记为完成');
+                    loadAppointments('approved');
+                } catch (error) {
+                    console.error('标记完成失败:', error);
+                    alert(error.error || '标记完成失败，请稍后重试');
                 }
             }
         }
@@ -601,17 +651,23 @@
             alert('编辑功能开发中...')
         }
 
-        function cancelAppointment(appointmentId) {
+        async function cancelAppointment(appointmentId) {
             if (confirm('确认取消此预约？')) {
-                let appointments = JSON.parse(localStorage.getItem('appointments') || '[]')
-                const index = appointments.findIndex(apt => apt.id === appointmentId)
-                if (index !== -1) {
-                    appointments.splice(index, 1)
-                    localStorage.setItem('appointments', JSON.stringify(appointments))
-                    alert('预约已取消')
-                    loadAppointments('pending')
-                } else {
-                    alert('未找到该预约')
+                try {
+                    await API.patch(`/api/schedule/appointments/${appointmentId}`, 
+                        { status: 'cancelled' },
+                        {
+                            headers: { 
+                                'Authorization': `Bearer ${Auth.state.access}`,
+                                'Content-Type': 'application/json'
+                            }
+                        }
+                    );
+                    alert('预约已取消');
+                    loadAppointments('pending');
+                } catch (error) {
+                    console.error('取消预约失败:', error);
+                    alert(error.error || '取消预约失败，请稍后重试');
                 }
             }
         }

@@ -3,6 +3,7 @@ from .document import Document
 from .school import School
 from .application import Application
 from .message import Message
+from .appointment import Appointment
 
 __all__ = [
     "User",
@@ -10,4 +11,5 @@ __all__ = [
     "School",
     "Application",
     "Message",
+    "Appointment",
 ]

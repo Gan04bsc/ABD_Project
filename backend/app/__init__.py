@@ -52,7 +52,8 @@ def create_app(config_name: str | None = None) -> Flask:
         allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
         methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     )
-    csrf.init_app(app)
+    # 不启用CSRF保护，因为使用JWT认证
+    # csrf.init_app(app)
     socketio.init_app(app, cors_allowed_origins=app.config.get("CORS_ORIGINS", ["*"]))
 
     # Simple health check
