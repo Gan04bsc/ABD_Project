@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>师生互动交流 - Study Abroad</title>
+    <link rel="stylesheet" href="./styles/styles.css" />
+</head>
+<body class="chat-body">
+    <!-- 顶部导航栏 -->
+    <div class="chat-header">
+        <div class="header-left">
+            <button class="back-button" onclick="goBack()">
+                <span>←</span> 返回控制台
+            </button>
+            <h1 class="page-title">师生互动交流</h1>
+        </div>
+        <div class="header-right">
+            <div class="user-info">
+                <span class="user-role" id="userRole">学生</span>
+                <button class="logout-button" onclick="Auth.signOut(); location.href='index.html'">登出</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主要内容区域 -->
+    <div class="chat-main-container">
+        <!-- 侧边栏 - 功能导航 -->
+        <div class="chat-sidebar">
+            <div class="sidebar-section">
+                <h3>功能导航</h3>
+                <div class="nav-buttons">
+                    <button class="nav-button active" onclick="showSection('appointments')">
+                        <span class="nav-icon">📅</span>
+                        预约管理
+                    </button>
+                    <button class="nav-button" onclick="showSection('chat')">
+                        <span class="nav-icon">💬</span>
+                        在线聊天
+                    </button>
+                    <button class="nav-button" onclick="showSection('history')">
+                        <span class="nav-icon">📋</span>
+                        历史记录
+                    </button>
+                </div>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3>快速操作</h3>
+                <div class="quick-actions">
+                    <button class="quick-action-btn" onclick="showNewAppointment()">
+                        <span>➕</span> 新建预约
+                    </button>
+                    <button class="quick-action-btn" onclick="refreshData()">
+                        <span>🔄</span> 刷新数据
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主内容区域 -->
+        <div class="chat-content">
+            <!-- 预约管理区域 -->
+            <div id="appointments-section" class="content-section active">
+                <div class="section-header">
+                    <h2>预约管理</h2>
+                    <div class="section-actions">
+                        <button class="button primary" onclick="showNewAppointment()">
+                            <span>➕</span> 新建预约
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 预约列表 -->
+                <div class="appointments-container">
+                    <div class="appointments-tabs">
+                        <button class="tab-button active" onclick="showAppointmentTab('pending')">待处理</button>
+                        <button class="tab-button" onclick="showAppointmentTab('approved')">已确认</button>
+                        <button class="tab-button" onclick="showAppointmentTab('completed')">已完成</button>
+                    </div>
+
+                    <div class="appointments-list" id="appointmentsList">
+                        <!-- 预约项目将通过JavaScript动态加载 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 在线聊天区域 -->
+            <div id="chat-section" class="content-section">
+                <div class="section-header">
+                    <h2>在线聊天</h2>
+                    <div class="chat-status">
+                        <span class="status-dot online"></span>
+                        <span>在线</span>
+                    </div>
+                </div>
+
+                <div class="chat-container">
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="message system">
+                            <div class="message-content">
+                                欢迎使用师生互动交流功能！您可以通过此功能与老师进行实时沟通。
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="chat-input-container">
+                        <input type="text" id="messageInput" placeholder="输入消息..." class="chat-input" />
+                        <button class="send-button" onclick="sendMessage()">发送</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 历史记录区域 -->
+            <div id="history-section" class="content-section">
+                <div class="section-header">
+                    <h2>历史记录</h2>
+                    <div class="filter-controls">
+                        <select id="historyFilter" class="filter-select">
+                            <option value="all">全部记录</option>
+                            <option value="appointments">预约记录</option>
+                            <option value="chat">聊天记录</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="history-list" id="historyList">
+                    <!-- 历史记录将通过JavaScript动态加载 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新建预约模态框 -->
+    <div id="appointmentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>新建预约申请</h3>
+                <button class="close-button" onclick="closeAppointmentModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="appointmentForm">
+                    <div class="form-group">
+                        <label for="teacherSelect">选择老师</label>
+                        <select id="teacherSelect" class="form-input" required>
+                            <option value="">请选择老师</option>
+                            <option value="teacher@test.com">吴老师 - 数据科学与人工智能</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="appointmentDate">预约日期</label>
+                        <input type="date" id="appointmentDate" class="form-input" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="appointmentTime">预约时间</label>
+                        <select id="appointmentTime" class="form-input" required>
+                            <option value="">请选择时间</option>
+                            <option value="09:00">09:00-10:00</option>
+                            <option value="10:00">10:00-11:00</option>
+                            <option value="11:00">11:00-12:00</option>
+                            <option value="14:00">14:00-15:00</option>
+                            <option value="15:00">15:00-16:00</option>
+                            <option value="16:00">16:00-17:00</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="appointmentType">预约类型</label>
+                        <select id="appointmentType" class="form-input" required>
+                            <option value="">请选择类型</option>
+                            <option value="academic">学术咨询</option>
+                            <option value="career">职业规划</option>
+                            <option value="research">研究指导</option>
+                            <option value="other">其他</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="appointmentReason">预约原因</label>
+                        <textarea id="appointmentReason" class="form-input" rows="4" placeholder="请详细说明预约原因..." required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="button secondary" onclick="closeAppointmentModal()">取消</button>
+                <button class="button primary" onclick="submitAppointment()">提交预约</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="./js/api.js"></script>
+    <script src="./js/auth.js"></script>
+    <script src="./js/chat.js"></script>
+    <script>
+        // 检查登录状态
+        if (!Auth.state.access) {
+            window.location.href = 'index.html';
+        }
+
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeChatPage();
+            loadAppointments();
+        });
+
+        function goBack() {
+            window.location.href = 'dashboard.html';
+        }
+
+        function initializeChatPage() {
+            // 根据用户角色显示不同内容
+            const userRole = getUserRole();
+            document.getElementById('userRole').textContent = userRole;
+            
+            // 调试信息：输出当前用户信息
+            console.log('当前用户信息:', {
+                role: Auth.state.role,
+                userInfo: Auth.state.userInfo,
+                userRole: userRole
+            });
+            
+            if (userRole === '老师') {
+                // 老师端显示预约管理功能
+                showSection('appointments');
+                // 隐藏学生端的快速操作
+                document.querySelector('.quick-actions').style.display = 'none';
+            } else {
+                // 学生端显示聊天功能，隐藏预约管理
+                showSection('chat');
+                // 隐藏预约管理相关的按钮
+                const appointmentSection = document.getElementById('appointments-section');
+                if (appointmentSection) {
+                    appointmentSection.style.display = 'none';
+                }
+                // 隐藏预约管理导航按钮
+                const appointmentNav = document.querySelector('button[onclick="showSection(\'appointments\')"]');
+                if (appointmentNav) {
+                    appointmentNav.style.display = 'none';
+                }
+            }
+        }
+
+        function getUserRole() {
+            // 从认证状态中获取用户角色
+            const role = Auth.state.role;
+            const userInfo = Auth.state.userInfo;
+            
+            // 如果role为空，尝试从userInfo中获取
+            if (!role && userInfo && userInfo.role) {
+                return userInfo.role === 'teacher' ? '老师' : '学生';
+            }
+            
+            if (role === 'teacher') {
+                return '老师';
+            } else {
+                return '学生';
+            }
+        }
+
+        function showSection(sectionName) {
+            // 隐藏所有内容区域
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // 移除所有导航按钮的激活状态
+            document.querySelectorAll('.nav-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // 显示选中的区域
+            document.getElementById(sectionName + '-section').classList.add('active');
+            
+            // 激活对应的导航按钮
+            event.target.classList.add('active');
+        }
+
+        function showAppointmentTab(tabName) {
+            // 移除所有标签的激活状态
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // 激活选中的标签
+            event.target.classList.add('active');
+            
+            // 加载对应标签的数据
+            loadAppointments(tabName);
+        }
+
+        function loadAppointments(status = 'pending') {
+            const appointmentsList = document.getElementById('appointmentsList');
+            const userRole = getUserRole();
+            
+            // 从本地存储加载预约数据
+            let appointments = JSON.parse(localStorage.getItem('appointments') || '[]');
+            
+            // 如果没有预约数据，添加一些测试数据（仅用于演示）
+            if (appointments.length === 0 && userRole === '老师') {
+                appointments = [
+                    {
+                        id: 1,
+                        teacher: '吴老师',
+                        subject: '数据科学与人工智能',
+                        date: '2024-01-15',
+                        time: '14:00-15:00',
+                        type: '学术咨询',
+                        reason: '关于机器学习算法的疑问',
+                        status: 'pending',
+                        student: {
+                            name: '张三',
+                            studentId: '2021001',
+                            grade: '2021级',
+                            major: '数据科学与人工智能',
+                            email: 'zhangsan@test.com'
+                        }
+                    },
+                    {
+                        id: 2,
+                        teacher: '吴老师',
+                        subject: '数据科学与人工智能',
+                        date: '2024-01-16',
+                        time: '10:00-11:00',
+                        type: '课程讨论',
+                        reason: '讨论期末项目方案',
+                        status: 'approved',
+                        student: {
+                            name: '李四',
+                            studentId: '2021002',
+                            grade: '2021级',
+                            major: '数据科学与人工智能',
+                            email: 'lisi@test.com'
+                        }
+                    }
+                ];
+                localStorage.setItem('appointments', JSON.stringify(appointments));
+            }
+            
+            // 调试信息：输出预约数据
+            console.log('当前用户角色:', userRole);
+            console.log('本地存储的预约数据:', appointments);
+            
+            if (userRole === '老师') {
+                // 老师端：显示所有学生的预约申请
+                // 不需要过滤，显示所有预约
+                console.log('老师端：显示所有预约申请');
+            } else {
+                // 学生端：不显示预约管理功能，学生应该通过其他方式发起预约
+                // 学生端主要功能是发起预约，而不是查看预约
+                console.log('学生端：学生不应该在预约管理页面查看预约');
+                appointments = []; // 学生端不显示预约列表
+            }
+
+            const filteredAppointments = appointments.filter(apt => apt.status === status);
+            
+            appointmentsList.innerHTML = filteredAppointments.map(appointment => {
+                // 根据用户角色显示不同的标题
+                let title = '';
+                if (userRole === '老师') {
+                    title = `${appointment.student.name} 的预约申请 - ${appointment.subject}`;
+                } else {
+                    title = `${appointment.teacher} - ${appointment.subject}`;
+                }
+                
+                return `
+                <div class="appointment-card">
+                    <div class="appointment-header">
+                        <div class="appointment-info">
+                            <h4>${title}</h4>
+                            <div class="appointment-meta">
+                                <span class="appointment-date">📅 ${appointment.date}</span>
+                                <span class="appointment-time">🕐 ${appointment.time}</span>
+                                <span class="appointment-type">📝 ${appointment.type}</span>
+                            </div>
+                        </div>
+                        <div class="appointment-status">
+                            <span class="status-badge status-${appointment.status}">
+                                ${getStatusText(appointment.status)}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="appointment-content">
+                        <p><strong>预约原因：</strong>${appointment.reason}</p>
+                        ${userRole === '老师' ? `
+                            <div class="student-info">
+                                <h5>学生信息</h5>
+                                <div class="student-details">
+                                    <p><strong>姓名：</strong>${appointment.student.name}</p>
+                                    <p><strong>学号：</strong>${appointment.student.studentId}</p>
+                                    <p><strong>年级：</strong>${appointment.student.grade}</p>
+                                    <p><strong>专业：</strong>${appointment.student.major}</p>
+                                    <p><strong>邮箱：</strong>${appointment.student.email}</p>
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="appointment-actions">
+                        ${getAppointmentActions(appointment.status, appointment.id)}
+                    </div>
+                </div>
+            `;
+            }).join('');
+        }
+
+        function getStatusText(status) {
+            const statusMap = {
+                'pending': '待处理',
+                'approved': '已确认',
+                'completed': '已完成',
+                'rejected': '已拒绝'
+            };
+            return statusMap[status] || status;
+        }
+
+        function getAppointmentActions(status, appointmentId) {
+            const userRole = getUserRole();
+            
+            if (userRole === '老师') {
+                if (status === 'pending') {
+                    return `
+                        <button class="button success" onclick="approveAppointment(${appointmentId})">✅ 接受</button>
+                        <button class="button danger" onclick="rejectAppointment(${appointmentId})">❌ 拒绝</button>
+                    `;
+                } else if (status === 'approved') {
+                    return `
+                        <button class="button primary" onclick="completeAppointment(${appointmentId})">✅ 标记完成</button>
+                    `;
+                } else if (status === 'completed') {
+                    return `
+                        <span class="completed-text">✅ 已完成</span>
+                    `;
+                }
+            } else {
+                if (status === 'pending') {
+                    return `
+                        <button class="button secondary" onclick="editAppointment(${appointmentId})">✏️ 编辑</button>
+                        <button class="button danger" onclick="cancelAppointment(${appointmentId})">❌ 取消</button>
+                    `;
+                } else if (status === 'approved') {
+                    return `
+                        <span class="approved-text">✅ 已确认</span>
+                    `;
+                } else if (status === 'completed') {
+                    return `
+                        <span class="completed-text">✅ 已完成</span>
+                    `;
+                }
+            }
+            
+            return '';
+        }
+
+        function showNewAppointment() {
+            document.getElementById('appointmentModal').style.display = 'flex';
+        }
+
+        function closeAppointmentModal() {
+            document.getElementById('appointmentModal').style.display = 'none';
+            document.getElementById('appointmentForm').reset();
+        }
+
+        function submitAppointment() {
+            const form = document.getElementById('appointmentForm');
+            const formData = new FormData(form);
+            
+            // 验证表单
+            if (!form.checkValidity()) {
+                alert('请填写所有必填字段');
+                return;
+            }
+            
+            // 获取当前用户信息
+            const currentUser = Auth.state.userInfo;
+            const studentInfo = {
+                name: currentUser.name || '学生',
+                studentId: currentUser.studentId || '2021001',
+                grade: currentUser.grade || '2021级',
+                major: currentUser.major || '数据科学与人工智能',
+                email: currentUser.email || 'student@test.com'
+            };
+            
+            // 创建新的预约申请
+            const newAppointment = {
+                id: Date.now(),
+                teacher: '吴老师',
+                subject: '数据科学与人工智能',
+                date: formData.get('appointmentDate'),
+                time: formData.get('appointmentTime'),
+                type: formData.get('appointmentType'),
+                reason: formData.get('appointmentReason'),
+                status: 'pending',
+                student: studentInfo
+            };
+            
+            // 保存预约申请到本地存储
+            let appointments = JSON.parse(localStorage.getItem('appointments') || '[]');
+            appointments.push(newAppointment);
+            localStorage.setItem('appointments', JSON.stringify(appointments));
+            
+            // 调试信息：输出保存的预约数据
+            console.log('保存的预约数据:', newAppointment);
+            console.log('所有预约数据:', appointments);
+            
+            alert('预约申请已提交，等待吴老师确认');
+            closeAppointmentModal();
+            loadAppointments();
+        }
+
+        function approveAppointment(appointmentId) {
+            if (confirm('确认接受此预约申请？')) {
+                alert('预约已确认');
+                loadAppointments();
+            }
+        }
+
+        function rejectAppointment(appointmentId) {
+            if (confirm('确认拒绝此预约申请？')) {
+                alert('预约已拒绝');
+                loadAppointments();
+            }
+        }
+
+        function completeAppointment(appointmentId) {
+            if (confirm('确认标记此预约为已完成？')) {
+                alert('预约已标记为完成');
+                loadAppointments();
+            }
+        }
+
+        function editAppointment(appointmentId) {
+            alert('编辑功能开发中...');
+        }
+
+        function cancelAppointment(appointmentId) {
+            if (confirm('确认取消此预约？')) {
+                alert('预约已取消');
+                loadAppointments();
+            }
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageElement = document.createElement('div');
+            messageElement.className = 'message user';
+            messageElement.innerHTML = `
+                <div class="message-content">
+                    <div class="message-text">${message}</div>
+                    <div class="message-time">${new Date().toLocaleTimeString()}</div>
+                </div>
+            `;
+            
+            messagesDiv.appendChild(messageElement);
+            input.value = '';
+            
+            // 滚动到底部
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function refreshData() {
+            loadAppointments();
+            alert('数据已刷新');
+        }
+
+        // 回车发送消息
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>

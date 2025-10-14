@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Study Abroad Portal</title>
+    <link rel="stylesheet" href="./styles/styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Study Abroad</h1>
+    </header>
+    <main>
+      <section>
+        <h2>注册</h2>
+        <form id="register-form" onsubmit="return Auth.submitRegister(event)">
+          <input type="email" name="email" placeholder="邮箱" required />
+          <input type="text" name="name" placeholder="昵称（可选）" />
+          <input type="password" name="password" placeholder="密码" required />
+          
+          <div class="role-selection">
+            <label class="role-label">选择用户类型：</label>
+            <div class="role-options">
+              <label class="role-option">
+                <input type="radio" name="role" value="student" checked />
+                <span class="role-card">
+                  <div class="role-icon">🎓</div>
+                  <div class="role-info">
+                    <div class="role-title">学生</div>
+                    <div class="role-desc">申请预约、查看课程、与老师交流</div>
+                  </div>
+                </span>
+              </label>
+              <label class="role-option">
+                <input type="radio" name="role" value="teacher" />
+                <span class="role-card">
+                  <div class="role-icon">👨‍🏫</div>
+                  <div class="role-info">
+                    <div class="role-title">老师</div>
+                    <div class="role-desc">管理预约、查看学生、提供指导</div>
+                  </div>
+                </span>
+              </label>
+            </div>
+          </div>
+          
+          <button class="button" type="submit">注册</button>
+        </form>
+      </section>
+      <section>
+        <h2>登录</h2>
+        <form id="login-form" onsubmit="return Auth.submitLogin(event)">
+          <input type="email" name="email" placeholder="邮箱" required />
+          <input type="password" name="password" placeholder="密码" required />
+          <button class="button" type="submit">登录</button>
+        </form>
+        <div id="auth-status"></div>
+      </section>
+      <section>
+        <h2>快速测试</h2>
+        <div class="test-accounts">
+          <div class="test-account">
+            <h3>学生账号测试</h3>
+            <p>邮箱: student@test.com</p>
+            <p>密码: 123456</p>
+            <button class="button" onclick="fillLoginForm('student@test.com', '123456')">快速登录学生账号</button>
+          </div>
+          <div class="test-account">
+            <h3>老师账号测试</h3>
+            <p>邮箱: teacher@test.com</p>
+            <p>密码: 123456</p>
+            <button class="button" onclick="fillLoginForm('teacher@test.com', '123456')">快速登录老师账号</button>
+          </div>
+        </div>
+        <div class="api-test">
+          <h3>API测试</h3>
+          <button class="button" onclick="API.get('/health').then(x=>alert(JSON.stringify(x)))">/health</button>
+          <button class="button" onclick="Auth.me()">/api/users/me</button>
+        </div>
+      </section>
+    </main>
+
+    <script src="./js/api.js"></script>
+    <script src="./js/auth.js"></script>
+    <script>
+      function fillLoginForm(email, password) {
+        const loginForm = document.getElementById('login-form');
+        loginForm.email.value = email;
+        loginForm.password.value = password;
+      }
+    </script>
+  </body>
+</html>

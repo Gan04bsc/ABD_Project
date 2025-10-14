@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>留学信息发布 - Study Abroad</title>
+    <link rel="stylesheet" href="./styles/styles.css" />
+</head>
+<body>
+    <header>
+        <h1>留学信息发布</h1>
+        <div>
+            <button class="button" onclick="goBack()">返回控制台</button>
+            <button class="button" onclick="Auth.signOut(); location.href='index.html'">登出</button>
+        </div>
+    </header>
+    
+    <main>
+        <section>
+            <h2>最新留学信息</h2>
+            <div id="news-list">
+                <div class="news-item" style="border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px;">
+                    <h3>美国大学申请截止日期提醒</h3>
+                    <p class="news-date">2024-01-15</p>
+                    <p>大部分美国大学的申请截止日期为1月15日，请同学们抓紧时间提交申请材料。</p>
+                </div>
+                <div class="news-item" style="border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px;">
+                    <h3>英国签证政策更新</h3>
+                    <p class="news-date">2024-01-10</p>
+                    <p>英国政府宣布新的学生签证政策，简化了申请流程，提高了通过率。</p>
+                </div>
+                <div class="news-item" style="border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px;">
+                    <h3>加拿大留学奖学金申请</h3>
+                    <p class="news-date">2024-01-08</p>
+                    <p>加拿大各大学开始接受2024年秋季入学的奖学金申请，截止日期为3月1日。</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="./js/api.js"></script>
+    <script src="./js/auth.js"></script>
+    <script>
+        // 检查登录状态
+        if (!Auth.state.access) {
+            window.location.href = 'index.html';
+        }
+
+        function goBack() {
+            window.location.href = 'dashboard.html';
+        }
+
+        // 页面加载时获取最新信息
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                // 这里可以调用API获取最新的留学信息
+                console.log('加载留学信息...');
+            } catch (err) {
+                console.error('加载信息失败:', err);
+            }
+        });
+    </script>
+</body>
+</html>
+

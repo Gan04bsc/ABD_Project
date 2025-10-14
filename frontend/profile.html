@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>个人资料管理 - Study Abroad</title>
+    <link rel="stylesheet" href="./styles/styles.css" />
+</head>
+<body>
+    <header>
+        <h1>个人资料管理</h1>
+        <div>
+            <button class="button" onclick="goBack()">返回控制台</button>
+            <button class="button" onclick="Auth.signOut(); location.href='index.html'">登出</button>
+        </div>
+    </header>
+    
+    <main>
+        <section>
+            <h2>编辑个人资料</h2>
+            <form id="profile-form" onsubmit="return saveProfile(event)">
+                <div>
+                    <label for="name">姓名：</label>
+                    <input type="text" id="name" name="name" required />
+                </div>
+                <div>
+                    <label for="student_id">学号：</label>
+                    <input type="text" id="student_id" name="student_id" />
+                </div>
+                <div>
+                    <label for="grade">年级：</label>
+                    <input type="text" id="grade" name="grade" />
+                </div>
+                <div>
+                    <label for="class_name">班级：</label>
+                    <input type="text" id="class_name" name="class_name" />
+                </div>
+                <div style="margin: 20px 0;">
+                    <button type="submit" class="button" style="padding: 10px 20px;">保存资料</button>
+                    <button type="button" class="button" onclick="loadProfile()" style="padding: 10px 20px; margin-left: 10px;">重新加载</button>
+                </div>
+            </form>
+        </section>
+
+        <section style="margin-top: 40px;">
+            <h2>文件管理</h2>
+            
+            <!-- 文件上传区域 -->
+            <div class="upload-area" style="border: 2px dashed #ddd; padding: 20px; margin: 20px 0; border-radius: 8px; text-align: center;">
+                <input type="file" id="file-input" multiple style="display: none;" accept=".txt,.pdf,.png,.jpg,.jpeg,.gif,.doc,.docx,.xls,.xlsx,.ppt,.pptx" />
+                <button class="button" onclick="document.getElementById('file-input').click()" style="padding: 10px 20px;">
+                    选择文件上传
+                </button>
+                <p style="margin: 10px 0; color: #666;">
+                    支持的文件类型：Word、PDF、图片、Excel、PowerPoint等
+                </p>
+            </div>
+
+            <!-- 文件列表 -->
+            <div id="file-list" style="margin-top: 20px;">
+                <div id="file-list-content">
+                    <p>正在加载文件列表...</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="./js/api.js"></script>
+    <script src="./js/auth.js"></script>
+    <script>
+        // 检查登录状态
+        if (!Auth.state.access) {
+            window.location.href = 'index.html';
+        }
+
+        function goBack() {
+            window.location.href = 'dashboard.html';
+        }
+
+        // 加载用户资料
+        async function loadProfile() {
+            try {
+                console.log('开始加载用户资料...');
+                const data = await API.get(`/api/users/profile?t=${Date.now()}`, { 
+                    headers: { 'Cache-Control': 'no-cache', Authorization: `Bearer ${Auth.state.access}` } 
+                });
+                console.log('获取到的用户资料:', data);
+                
+                document.getElementById('name').value = data.name || '';
+                document.getElementById('student_id').value = data.student_id || '';
+                document.getElementById('grade').value = data.grade || '';
+                document.getElementById('class_name').value = data.class_name || '';
+                
+                console.log('用户资料加载完成');
+            } catch (err) {
+                // 401 刷新 token 后重试一次
+                if (err?.status === 401) {
+                    await Auth.refresh();
+                    return loadProfile();
+                }
+                console.error('加载资料失败:', err);
+                alert('加载资料失败：' + (err?.message || err));
+            }
+        }
+
+        // 保存用户资料
+        async function saveProfile(e) {
+            e?.preventDefault?.();
+            const form = document.getElementById('profile-form');
+            const body = {
+                name: form.name.value.trim(),
+                student_id: form.student_id.value.trim(),
+                grade: form.grade.value.trim(),
+                class_name: form.class_name.value.trim(),
+            };
+            console.log('准备保存用户资料:', body);
+            
+            try {
+                const resp = await API.put('/api/users/profile', body, {
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${Auth.state.access}` }
+                });
+                console.log('保存成功，服务器响应:', resp);
+                alert('保存成功');
+            } catch (err) {
+                console.error('保存失败:', err);
+                // access 过期则刷新后重试一次
+                try {
+                    await Auth.refresh();
+                    const resp2 = await API.put('/api/users/profile', body, {
+                        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${Auth.state.access}` }
+                    });
+                    console.log('保存成功，服务器响应:', resp2);
+                    alert('保存成功');
+                } catch (e) {
+                    alert('保存失败：' + (e?.message || e));
+                }
+            }
+            return false;
+        }
+
+        // 文件管理功能
+        let files = [];
+
+        // 加载文件列表
+        async function loadFiles() {
+            try {
+                const response = await API.get('/api/documents', {
+                    headers: { Authorization: `Bearer ${Auth.state.access}` }
+                });
+                files = response;
+                renderFileList();
+            } catch (err) {
+                if (err?.status === 401) {
+                    await Auth.refresh();
+                    return loadFiles();
+                }
+                console.error('加载文件列表失败:', err);
+                document.getElementById('file-list-content').innerHTML = 
+                    `<p style="color: red;">加载文件列表失败：${err?.message || err}</p>`;
+            }
+        }
+
+        // 渲染文件列表
+        function renderFileList() {
+            const container = document.getElementById('file-list-content');
+            
+            if (files.length === 0) {
+                container.innerHTML = '<p style="color: #666;">暂无文件</p>';
+                return;
+            }
+
+            container.innerHTML = files.map(file => `
+                <div class="file-item" style="border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="flex: 1;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="file-icon" style="font-size: 24px;">${getFileIcon(file.file_type)}</span>
+                            <div>
+                                <div class="file-name" style="font-weight: 500; cursor: pointer; color: #007bff;" data-file-id="${file.id}" onclick="viewFile(${file.id})" title="点击查看文件">
+                                    ${file.name}
+                                </div>
+                                <div style="font-size: 12px; color: #666;">
+                                    ${formatFileSize(file.file_size)} • ${file.file_type.toUpperCase()} • 
+                                    ${new Date(file.created_at).toLocaleDateString()}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 5px;">
+                        <button class="button view-btn" data-file-id="${file.id}" style="padding: 5px 10px; font-size: 12px; background: #17a2b8;">查看</button>
+                        <button class="button download-btn" data-file-id="${file.id}" style="padding: 5px 10px; font-size: 12px;">下载</button>
+                        <button class="button rename-btn" data-file-id="${file.id}" data-file-name="${file.name.replace(/"/g, '&quot;')}" style="padding: 5px 10px; font-size: 12px; background: #28a745;">重命名</button>
+                        <button class="button delete-btn" data-file-id="${file.id}" style="padding: 5px 10px; font-size: 12px; background: #dc3545;">删除</button>
+                    </div>
+                </div>
+            `).join('');
+            
+            // 添加事件监听器
+            addFileEventListeners();
+        }
+        
+        // 添加文件操作事件监听器
+        function addFileEventListeners() {
+            // 查看按钮
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const fileId = parseInt(e.target.getAttribute('data-file-id'));
+                    viewFile(fileId);
+                });
+            });
+            
+            // 下载按钮
+            document.querySelectorAll('.download-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const fileId = parseInt(e.target.getAttribute('data-file-id'));
+                    downloadFile(fileId);
+                });
+            });
+            
+            // 重命名按钮
+            document.querySelectorAll('.rename-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const fileId = parseInt(e.target.getAttribute('data-file-id'));
+                    const fileName = e.target.getAttribute('data-file-name');
+                    renameFile(fileId, fileName);
+                });
+            });
+            
+            // 删除按钮
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const fileId = parseInt(e.target.getAttribute('data-file-id'));
+                    deleteFile(fileId);
+                });
+            });
+        }
+
+        // 获取文件图标
+        function getFileIcon(fileType) {
+            const icons = {
+                'pdf': '📄',
+                'doc': '📝', 'docx': '📝',
+                'xls': '📊', 'xlsx': '📊',
+                'ppt': '📊', 'pptx': '📊',
+                'png': '🖼️', 'jpg': '🖼️', 'jpeg': '🖼️', 'gif': '🖼️',
+                'txt': '📄'
+            };
+            return icons[fileType] || '📄';
+        }
+
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // 上传文件
+        async function uploadFiles() {
+            const fileInput = document.getElementById('file-input');
+            const files = fileInput.files;
+            
+            if (files.length === 0) return;
+
+            for (let file of files) {
+                await uploadSingleFile(file);
+            }
+            
+            // 清空文件输入
+            fileInput.value = '';
+            // 重新加载文件列表
+            await loadFiles();
+        }
+
+        // 上传单个文件
+        async function uploadSingleFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/api/documents', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${Auth.state.access}`
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.message);
+                }
+
+                console.log('文件上传成功:', result);
+            } catch (err) {
+                console.error('文件上传失败:', err);
+                alert(`文件 ${file.name} 上传失败：${err.message}`);
+            }
+        }
+
+        // 查看文件（在新标签页中打开）
+        async function viewFile(fileId) {
+            try {
+                // 创建一个临时的 iframe 来获取文件内容
+                const response = await fetch(`/api/documents/${fileId}/view`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${Auth.state.access}`
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        await Auth.refresh();
+                        return viewFile(fileId);
+                    }
+                    throw new Error(`查看失败: ${response.statusText}`);
+                }
+
+                // 创建 blob URL 并在新标签页中打开
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const newWindow = window.open(url, '_blank');
+                
+                // 清理 URL（可选，但建议在新窗口关闭后清理）
+                if (newWindow) {
+                    newWindow.addEventListener('beforeunload', () => {
+                        window.URL.revokeObjectURL(url);
+                    });
+                }
+            } catch (err) {
+                console.error('文件查看失败:', err);
+                alert(`查看失败：${err.message}`);
+            }
+        }
+
+        // 下载文件
+        async function downloadFile(fileId) {
+            try {
+                const response = await fetch(`/api/documents/${fileId}/download`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${Auth.state.access}`
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        await Auth.refresh();
+                        return downloadFile(fileId);
+                    }
+                    throw new Error(`下载失败: ${response.statusText}`);
+                }
+
+                // 获取文件名
+                const contentDisposition = response.headers.get('Content-Disposition');
+                let filename = 'download';
+                if (contentDisposition) {
+                    const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+                    if (filenameMatch) {
+                        filename = filenameMatch[1];
+                    }
+                }
+
+                // 创建下载链接
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+            } catch (err) {
+                console.error('文件下载失败:', err);
+                alert(`下载失败：${err.message}`);
+            }
+        }
+
+        // 重命名文件
+        async function renameFile(fileId, currentName) {
+            const newName = prompt('请输入新的文件名:', currentName);
+            if (!newName || newName.trim() === '') return;
+
+            try {
+                const response = await fetch(`/api/documents/${fileId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${Auth.state.access}`
+                    },
+                    body: JSON.stringify({
+                        name: newName.trim()
+                    })
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        await Auth.refresh();
+                        return renameFile(fileId, currentName);
+                    }
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || response.statusText);
+                }
+
+                const result = await response.json();
+                console.log('文件重命名成功:', result);
+                alert('重命名成功');
+                await loadFiles(); // 重新加载文件列表
+            } catch (err) {
+                console.error('文件重命名失败:', err);
+                alert(`重命名失败：${err.message}`);
+            }
+        }
+
+        // 删除文件
+        async function deleteFile(fileId) {
+            if (!confirm('确定要删除这个文件吗？此操作不可撤销。')) return;
+
+            try {
+                const response = await fetch(`/api/documents/${fileId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${Auth.state.access}`
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        await Auth.refresh();
+                        return deleteFile(fileId);
+                    }
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || response.statusText);
+                }
+
+                const result = await response.json();
+                console.log('文件删除成功:', result);
+                alert('删除成功');
+                await loadFiles(); // 重新加载文件列表
+            } catch (err) {
+                console.error('文件删除失败:', err);
+                alert(`删除失败：${err.message}`);
+            }
+        }
+
+        // 页面加载时自动加载用户资料和文件列表
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadProfile();
+            await loadFiles();
+        });
+
+        // 绑定文件上传事件
+        document.getElementById('file-input').addEventListener('change', uploadFiles);
+    </script>
+</body>
+</html>
