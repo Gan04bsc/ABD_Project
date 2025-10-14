@@ -1,26 +1,26 @@
 const Auth = {
   state: {
-    access: localStorage.getItem('access_token') || '',
-    refresh: localStorage.getItem('refresh_token') || '',
-    role: localStorage.getItem('user_role') || '',
-    userInfo: JSON.parse(localStorage.getItem('user_info') || '{}'),
+    access: sessionStorage.getItem('access_token') || '',
+    refresh: sessionStorage.getItem('refresh_token') || '',
+    role: sessionStorage.getItem('user_role') || '',
+    userInfo: JSON.parse(sessionStorage.getItem('user_info') || '{}'),
   },
   setTokens({ access_token, refresh_token, role, user_info }) {
     if (access_token) {
       this.state.access = access_token;
-      localStorage.setItem('access_token', access_token);
+      sessionStorage.setItem('access_token', access_token);
     }
     if (refresh_token) {
       this.state.refresh = refresh_token;
-      localStorage.setItem('refresh_token', refresh_token);
+      sessionStorage.setItem('refresh_token', refresh_token);
     }
     if (role) {
       this.state.role = role;
-      localStorage.setItem('user_role', role);
+      sessionStorage.setItem('user_role', role);
     }
     if (user_info) {
       this.state.userInfo = user_info;
-      localStorage.setItem('user_info', JSON.stringify(user_info));
+      sessionStorage.setItem('user_info', JSON.stringify(user_info));
     }
     this.updateStatus();
   },
@@ -29,10 +29,10 @@ const Auth = {
     this.state.refresh = '';
     this.state.role = '';
     this.state.userInfo = {};
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user_role');
-    localStorage.removeItem('user_info');
+    sessionStorage.removeItem('access_token');
+    sessionStorage.removeItem('refresh_token');
+    sessionStorage.removeItem('user_role');
+    sessionStorage.removeItem('user_info');
     this.updateStatus();
   },
   async submitRegister(e) {

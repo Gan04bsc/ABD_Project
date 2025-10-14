@@ -76,6 +76,7 @@
                     <div class="appointments-tabs">
                         <button class="tab-button active" onclick="showAppointmentTab('pending')">待处理</button>
                         <button class="tab-button" onclick="showAppointmentTab('approved')">已确认</button>
+                        <button class="tab-button" onclick="showAppointmentTab('rejected')">已拒绝</button>
                         <button class="tab-button" onclick="showAppointmentTab('completed')">已完成</button>
                     </div>
 
@@ -142,7 +143,7 @@
                 <form id="appointmentForm">
                     <div class="form-group">
                         <label for="teacherSelect">选择老师</label>
-                        <select id="teacherSelect" class="form-input" required>
+                        <select id="teacherSelect" name="teacherSelect" class="form-input" required>
                             <option value="">请选择老师</option>
                             <option value="teacher@test.com">吴老师 - 数据科学与人工智能</option>
                         </select>
@@ -150,36 +151,36 @@
                     
                     <div class="form-group">
                         <label for="appointmentDate">预约日期</label>
-                        <input type="date" id="appointmentDate" class="form-input" required>
+                        <input type="date" id="appointmentDate" name="appointmentDate" class="form-input" required>
                     </div>
                     
                     <div class="form-group">
                         <label for="appointmentTime">预约时间</label>
-                        <select id="appointmentTime" class="form-input" required>
+                        <select id="appointmentTime" name="appointmentTime" class="form-input" required>
                             <option value="">请选择时间</option>
-                            <option value="09:00">09:00-10:00</option>
-                            <option value="10:00">10:00-11:00</option>
-                            <option value="11:00">11:00-12:00</option>
-                            <option value="14:00">14:00-15:00</option>
-                            <option value="15:00">15:00-16:00</option>
-                            <option value="16:00">16:00-17:00</option>
+                            <option value="09:00-10:00">09:00-10:00</option>
+                            <option value="10:00-11:00">10:00-11:00</option>
+                            <option value="11:00-12:00">11:00-12:00</option>
+                            <option value="14:00-15:00">14:00-15:00</option>
+                            <option value="15:00-16:00">15:00-16:00</option>
+                            <option value="16:00-17:00">16:00-17:00</option>
                         </select>
                     </div>
                     
                     <div class="form-group">
                         <label for="appointmentType">预约类型</label>
-                        <select id="appointmentType" class="form-input" required>
+                        <select id="appointmentType" name="appointmentType" class="form-input" required>
                             <option value="">请选择类型</option>
-                            <option value="academic">学术咨询</option>
-                            <option value="career">职业规划</option>
-                            <option value="research">研究指导</option>
-                            <option value="other">其他</option>
+                            <option value="学术咨询">学术咨询</option>
+                            <option value="职业规划">职业规划</option>
+                            <option value="研究指导">研究指导</option>
+                            <option value="其他">其他</option>
                         </select>
                     </div>
                     
                     <div class="form-group">
                         <label for="appointmentReason">预约原因</label>
-                        <textarea id="appointmentReason" class="form-input" rows="4" placeholder="请详细说明预约原因..." required></textarea>
+                        <textarea id="appointmentReason" name="appointmentReason" class="form-input" rows="4" placeholder="请详细说明预约原因..." required></textarea>
                     </div>
                 </form>
             </div>
@@ -274,7 +275,12 @@
             document.getElementById(sectionName + '-section').classList.add('active');
             
             // 激活对应的导航按钮
-            event.target.classList.add('active');
+            const navButtons = document.querySelectorAll('.nav-button');
+            navButtons.forEach(button => {
+                if (button.getAttribute('onclick').includes(sectionName)) {
+                    button.classList.add('active');
+                }
+            });
         }
 
         function showAppointmentTab(tabName) {
@@ -283,11 +289,26 @@
                 button.classList.remove('active');
             });
             
-            // 激活选中的标签
-            event.target.classList.add('active');
+            // 激活选中的标签 - 通过tabName找到对应按钮
+            const buttons = document.querySelectorAll('.tab-button');
+            buttons.forEach(button => {
+                if (button.textContent.includes(getTabLabel(tabName))) {
+                    button.classList.add('active');
+                }
+            });
             
             // 加载对应标签的数据
             loadAppointments(tabName);
+        }
+        
+        function getTabLabel(status) {
+            const labelMap = {
+                'pending': '待处理',
+                'approved': '已确认',
+                'rejected': '已拒绝',
+                'completed': '已完成'
+            };
+            return labelMap[status] || status;
         }
 
         function loadAppointments(status = 'pending') {
@@ -311,9 +332,9 @@
                         status: 'pending',
                         student: {
                             name: '张三',
-                            studentId: '2021001',
+                            student_id: '2021001',
                             grade: '2021级',
-                            major: '数据科学与人工智能',
+                            class_name: '数据科学与人工智能2021级1班',
                             email: 'zhangsan@test.com'
                         }
                     },
@@ -328,9 +349,9 @@
                         status: 'approved',
                         student: {
                             name: '李四',
-                            studentId: '2021002',
+                            student_id: '2021002',
                             grade: '2021级',
-                            major: '数据科学与人工智能',
+                            class_name: '数据科学与人工智能2021级1班',
                             email: 'lisi@test.com'
                         }
                     }
@@ -384,16 +405,16 @@
                     <div class="appointment-content">
                         <p><strong>预约原因：</strong>${appointment.reason}</p>
                         ${userRole === '老师' ? `
-                            <div class="student-info">
-                                <h5>学生信息</h5>
-                                <div class="student-details">
-                                    <p><strong>姓名：</strong>${appointment.student.name}</p>
-                                    <p><strong>学号：</strong>${appointment.student.studentId}</p>
-                                    <p><strong>年级：</strong>${appointment.student.grade}</p>
-                                    <p><strong>专业：</strong>${appointment.student.major}</p>
-                                    <p><strong>邮箱：</strong>${appointment.student.email}</p>
-                                </div>
-                            </div>
+                <div class="student-info">
+                    <h5>学生信息</h5>
+                    <div class="student-details">
+                        <p><strong>姓名：</strong>${appointment.student.name || '未设置'}</p>
+                        <p><strong>学号：</strong>${appointment.student.student_id || '未设置'}</p>
+                        <p><strong>年级：</strong>${appointment.student.grade || '未设置'}</p>
+                        <p><strong>班级：</strong>${appointment.student.class_name || '未设置'}</p>
+                        <p><strong>邮箱：</strong>${appointment.student.email || '未设置'}</p>
+                    </div>
+                </div>
                         ` : ''}
                     </div>
                     <div class="appointment-actions">
@@ -427,6 +448,10 @@
                     return `
                         <button class="button primary" onclick="completeAppointment(${appointmentId})">✅ 标记完成</button>
                     `;
+                } else if (status === 'rejected') {
+                    return `
+                        <span class="rejected-text">❌ 已拒绝</span>
+                    `;
                 } else if (status === 'completed') {
                     return `
                         <span class="completed-text">✅ 已完成</span>
@@ -441,6 +466,10 @@
                 } else if (status === 'approved') {
                     return `
                         <span class="approved-text">✅ 已确认</span>
+                    `;
+                } else if (status === 'rejected') {
+                    return `
+                        <span class="rejected-text">❌ 已拒绝</span>
                     `;
                 } else if (status === 'completed') {
                     return `
@@ -461,7 +490,7 @@
             document.getElementById('appointmentForm').reset();
         }
 
-        function submitAppointment() {
+        async function submitAppointment() {
             const form = document.getElementById('appointmentForm');
             const formData = new FormData(form);
             
@@ -471,15 +500,30 @@
                 return;
             }
             
-            // 获取当前用户信息
-            const currentUser = Auth.state.userInfo;
+            // 从后端获取最新的用户信息
+            let currentUser = Auth.state.userInfo;
+            try {
+                const userInfo = await API.get('/api/users/me', {
+                    headers: { Authorization: `Bearer ${Auth.state.access}` }
+                });
+                currentUser = userInfo;
+                // 更新本地存储的用户信息
+                Auth.setTokens({ user_info: userInfo });
+            } catch (err) {
+                console.log('获取最新用户信息失败，使用缓存的用户信息:', err);
+            }
+            
             const studentInfo = {
-                name: currentUser.name || '学生',
-                studentId: currentUser.studentId || '2021001',
-                grade: currentUser.grade || '2021级',
-                major: currentUser.major || '数据科学与人工智能',
-                email: currentUser.email || 'student@test.com'
+                name: currentUser.name || '未设置',
+                student_id: currentUser.student_id || '未设置',
+                grade: currentUser.grade || '未设置',
+                class_name: currentUser.class_name || '未设置',
+                email: currentUser.email || '未设置'
             };
+            
+            // 调试信息：输出学生信息
+            console.log('提交预约时的用户信息:', currentUser);
+            console.log('提交预约时的学生信息:', studentInfo);
             
             // 创建新的预约申请
             const newAppointment = {
@@ -510,33 +554,65 @@
 
         function approveAppointment(appointmentId) {
             if (confirm('确认接受此预约申请？')) {
-                alert('预约已确认');
-                loadAppointments();
+                let appointments = JSON.parse(localStorage.getItem('appointments') || '[]')
+                const index = appointments.findIndex(apt => apt.id === appointmentId)
+                if (index !== -1) {
+                    appointments[index].status = 'approved'
+                    localStorage.setItem('appointments', JSON.stringify(appointments))
+                    alert('预约已确认')
+                    loadAppointments('pending')
+                } else {
+                    alert('未找到该预约')
+                }
             }
         }
 
         function rejectAppointment(appointmentId) {
             if (confirm('确认拒绝此预约申请？')) {
-                alert('预约已拒绝');
-                loadAppointments();
+                let appointments = JSON.parse(localStorage.getItem('appointments') || '[]')
+                const index = appointments.findIndex(apt => apt.id === appointmentId)
+                if (index !== -1) {
+                    appointments[index].status = 'rejected'
+                    localStorage.setItem('appointments', JSON.stringify(appointments))
+                    alert('预约已拒绝')
+                    loadAppointments('pending')
+                } else {
+                    alert('未找到该预约')
+                }
             }
         }
 
         function completeAppointment(appointmentId) {
             if (confirm('确认标记此预约为已完成？')) {
-                alert('预约已标记为完成');
-                loadAppointments();
+                let appointments = JSON.parse(localStorage.getItem('appointments') || '[]')
+                const index = appointments.findIndex(apt => apt.id === appointmentId)
+                if (index !== -1) {
+                    appointments[index].status = 'completed'
+                    localStorage.setItem('appointments', JSON.stringify(appointments))
+                    alert('预约已标记为完成')
+                    loadAppointments('approved')
+                } else {
+                    alert('未找到该预约')
+                }
             }
         }
 
         function editAppointment(appointmentId) {
-            alert('编辑功能开发中...');
+            alert('编辑功能开发中...')
         }
 
         function cancelAppointment(appointmentId) {
             if (confirm('确认取消此预约？')) {
-                alert('预约已取消');
-                loadAppointments();
+                let appointments = JSON.parse(localStorage.getItem('appointments') || '[]')
+                const index = appointments.findIndex(apt => apt.id === appointmentId)
+                if (index !== -1) {
+                    appointments.splice(index, 1)
+                    localStorage.setItem('appointments', JSON.stringify(appointments))
+                    alert('预约已取消')
+                    loadAppointments('pending')
+                } else {
+                    alert('未找到该预约')
+                }
             }
         }
 
