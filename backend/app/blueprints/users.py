@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from ..extensions import db, csrf
 from ..models import User
+from ..models.document import Document
 
 bp = Blueprint("users", __name__, url_prefix="/api/users")
 
@@ -62,4 +63,98 @@ def profile_update():
             "grade": user.grade,
             "class_name": user.class_name,
         },
+    })
+
+
+@bp.get("/students")
+@jwt_required()
+@csrf.exempt
+def get_students():
+    """获取所有学生列表（仅教师可访问）"""
+    ident = get_jwt_identity()
+    current_user = User.query.get(int(ident)) if ident is not None else None
+    
+    if not current_user:
+        return jsonify({"message": "未找到用户"}), 404
+    
+    # 权限检查：仅教师可访问
+    if current_user.role != "teacher":
+        return jsonify({"message": "权限不足，仅教师可访问"}), 403
+    
+    # 获取所有学生
+    students = User.query.filter_by(role="student").order_by(User.created_at.desc()).all()
+    
+    students_data = []
+    for student in students:
+        # 统计学生上传的文档数量
+        doc_count = Document.query.filter_by(user_id=student.id).count()
+        
+        students_data.append({
+            "id": student.id,
+            "name": student.name,
+            "email": student.email,
+            "student_id": student.student_id,
+            "grade": student.grade,
+            "class_name": student.class_name,
+            "created_at": student.created_at.isoformat() if student.created_at else None,
+            "document_count": doc_count,
+        })
+    
+    return jsonify({
+        "students": students_data,
+        "total": len(students_data),
+    })
+
+
+@bp.get("/students/<int:student_id>")
+@jwt_required()
+@csrf.exempt
+def get_student_detail(student_id):
+    """获取指定学生的详细信息及其上传的文档（仅教师可访问）"""
+    ident = get_jwt_identity()
+    current_user = User.query.get(int(ident)) if ident is not None else None
+    
+    if not current_user:
+        return jsonify({"message": "未找到用户"}), 404
+    
+    # 权限检查：仅教师可访问
+    if current_user.role != "teacher":
+        return jsonify({"message": "权限不足，仅教师可访问"}), 403
+    
+    # 获取指定学生
+    student = User.query.get(student_id)
+    if not student:
+        return jsonify({"message": "未找到该学生"}), 404
+    
+    if student.role != "student":
+        return jsonify({"message": "该用户不是学生"}), 400
+    
+    # 获取学生上传的所有文档
+    documents = Document.query.filter_by(user_id=student_id).order_by(Document.created_at.desc()).all()
+    
+    documents_data = []
+    for doc in documents:
+        documents_data.append({
+            "id": doc.id,
+            "name": doc.name,
+            "original_name": doc.original_name,
+            "file_path": doc.file_path,
+            "file_size": doc.file_size,
+            "file_type": doc.file_type,
+            "category": doc.category,
+            "created_at": doc.created_at.isoformat() if doc.created_at else None,
+        })
+    
+    return jsonify({
+        "student": {
+            "id": student.id,
+            "name": student.name,
+            "email": student.email,
+            "student_id": student.student_id,
+            "grade": student.grade,
+            "class_name": student.class_name,
+            "created_at": student.created_at.isoformat() if student.created_at else None,
+        },
+        "documents": documents_data,
+        "document_count": len(documents_data),
     })

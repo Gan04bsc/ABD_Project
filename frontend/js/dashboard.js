@@ -51,6 +51,14 @@ async function refreshProfilePopover() {
 		<div>年级：${me.grade || ''}</div>
 		<div>班级：${me.class_name || ''}</div>
 	`;
+	
+	// 如果是教师，显示教师专属模块
+	if (me.role === 'teacher') {
+		const teacherModules = document.querySelectorAll('.teacher-only');
+		teacherModules.forEach(module => {
+			module.style.display = 'block';
+		});
+	}
 }
 
 // 切换用户信息弹层显示

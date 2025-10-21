@@ -32,6 +32,17 @@
         <p class="welcome-subtitle">阿伯丁学院智慧留学管理平台</p>
         
         <div class="dashboard-modules-grid">
+          <!-- 教师专属模块：学生管理 -->
+          <div class="dashboard-module-card teacher-only" onclick="goToModule('students.html')" style="display: none;">
+            <div class="module-icon">👥</div>
+            <div class="module-status status-enabled">已启用</div>
+            <h3 class="dashboard-module-title">学生信息管理</h3>
+            <p class="dashboard-module-description">查看所有学生信息和上传的文档资料</p>
+            <div class="module-action">
+              <a href="#" class="action-button">→ 进入系统</a>
+            </div>
+          </div>
+          
           <div class="dashboard-module-card" onclick="goToModule('chat.html')">
             <div class="module-icon">💬</div>
             <div class="module-status status-enabled">已启用</div>

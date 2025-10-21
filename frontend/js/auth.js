@@ -119,6 +119,63 @@ const Auth = {
       el.innerText = '未登录';
     }
   },
+  
+  // 检查认证状态（用于其他页面）
+  async checkAuth() {
+    // 如果没有 access token，直接失败
+    if (!this.state.access) {
+      throw new Error('未登录');
+    }
+    
+    // 尝试获取用户信息验证 token 是否有效
+    try {
+      const userInfo = await API.get('/api/users/me', {
+        headers: { Authorization: `Bearer ${this.state.access}` },
+      });
+      
+      // 更新用户信息
+      this.state.userInfo = userInfo;
+      this.state.role = userInfo.role;
+      sessionStorage.setItem('user_info', JSON.stringify(userInfo));
+      sessionStorage.setItem('user_role', userInfo.role);
+      
+      // 为了兼容，添加 token 和 user 属性
+      this.state.token = this.state.access;
+      this.state.user = userInfo;
+      
+      return userInfo;
+    } catch (err) {
+      // 如果 access token 过期，尝试刷新
+      if (this.state.refresh) {
+        try {
+          await this.refresh();
+          // 刷新成功后重新获取用户信息
+          const userInfo = await API.get('/api/users/me', {
+            headers: { Authorization: `Bearer ${this.state.access}` },
+          });
+          
+          this.state.userInfo = userInfo;
+          this.state.role = userInfo.role;
+          sessionStorage.setItem('user_info', JSON.stringify(userInfo));
+          sessionStorage.setItem('user_role', userInfo.role);
+          
+          // 为了兼容，添加 token 和 user 属性
+          this.state.token = this.state.access;
+          this.state.user = userInfo;
+          
+          return userInfo;
+        } catch (refreshErr) {
+          // 刷新失败，清除认证信息
+          this.signOut();
+          throw new Error('登录已过期，请重新登录');
+        }
+      }
+      
+      // 没有 refresh token，清除认证信息
+      this.signOut();
+      throw new Error('登录已过期，请重新登录');
+    }
+  },
 };
 
 document.addEventListener('DOMContentLoaded', () => Auth.updateStatus());
