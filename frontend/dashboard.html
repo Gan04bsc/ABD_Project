@@ -3,138 +3,126 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Study Abroad - 阿伯丁留学服务平台</title>
+    <title>AberdeenIMS - 主页面</title>
     <link rel="stylesheet" href="./styles/styles.css" />
   </head>
-  <body class="dashboard-body">
-    <!-- 顶部导航栏 -->
-    <div class="header-bar">
-      <div class="logo-section">
-        <div class="logo">A</div>
-        <h1 class="header-title">华南师范大学阿伯丁 数据科学与人工智能学院</h1>
-      </div>
-      <div class="header-actions">
-        <div class="status-indicator">
-          <div class="status-dot"></div>
-          <span>所有系统正常运行</span>
+  <body class="portal-page dashboard-page">
+    <div class="portal-bg" aria-hidden="true">
+      <span class="bg-icon i1">◌</span><span class="bg-icon i2">◍</span><span class="bg-icon i3">⌘</span><span class="bg-icon i4">⌁</span>
+      <span class="bg-icon i5">◔</span><span class="bg-icon i6">⌂</span><span class="bg-icon i7">⌗</span><span class="bg-icon i8">⌁</span>
+      <span class="bg-icon i9">◌</span><span class="bg-icon i10">◍</span><span class="bg-icon i11">⌘</span><span class="bg-icon i12">⌂</span>
+      <span class="bg-icon i13">⌁</span><span class="bg-icon i14">◔</span><span class="bg-icon i15">⌗</span><span class="bg-icon i16">◌</span>
+      <span class="bg-icon i17">⌂</span><span class="bg-icon i18">◍</span><span class="bg-icon i19">⌘</span><span class="bg-icon i20">⌁</span>
+    </div>
+
+    <header class="portal-topbar">
+      <div class="brand-group">
+        <div class="brand-shield">A</div>
+        <div class="brand-text">
+          <div class="brand-cn">华南师范大学阿伯丁学院</div>
+          <div class="brand-en">School of Data Science and Artificial Intelligence</div>
         </div>
-        <div class="user-info" id="profile-btn">
-          <div class="user-avatar" id="user-avatar">U</div>
+        <div class="brand-mark">IMS</div>
+      </div>
+      <div class="portal-top-actions">
+        <div class="portal-alert">部分系统离线</div>
+        <div class="portal-lang">简体中文</div>
+        <div class="portal-user-mini" id="profile-btn">
+          <span class="mini-avatar" id="user-avatar">U</span>
           <span id="username">用户</span>
         </div>
       </div>
-    </div>
+    </header>
 
-    <!-- 主要内容区域 -->
-    <div class="main-container">
-      <div class="welcome-card">
-        <h1 class="welcome-title">欢迎使用伯丁留学服务平台</h1>
-        <p class="welcome-subtitle">阿伯丁学院智慧留学管理平台</p>
-        
-        <div class="dashboard-modules-grid">
-          <!-- 教师专属模块：学生管理 -->
-          <div class="dashboard-module-card teacher-only" onclick="goToModule('students.html')" style="display: none;">
-            <div class="module-icon">👥</div>
-            <div class="module-status status-enabled">已启用</div>
-            <h3 class="dashboard-module-title">学生信息管理</h3>
-            <p class="dashboard-module-description">查看所有学生信息和上传的文档资料</p>
-            <div class="module-action">
-              <a href="#" class="action-button">→ 进入系统</a>
-            </div>
-          </div>
-          
-          <div class="dashboard-module-card" onclick="goToModule('chat.html')">
-            <div class="module-icon">💬</div>
-            <div class="module-status status-enabled">已启用</div>
-            <h3 class="dashboard-module-title">师生互动交流</h3>
-            <p class="dashboard-module-description">与老师和同学进行实时交流，获取留学指导和帮助</p>
-            <div class="module-action">
-              <a href="#" class="action-button">→ 进入系统</a>
-            </div>
-          </div>
-          
-          <div class="dashboard-module-card" onclick="goToModule('news.html')">
-            <div class="module-icon">📰</div>
-            <div class="module-status status-enabled">已启用</div>
-            <h3 class="dashboard-module-title">留学信息发布</h3>
-            <p class="dashboard-module-description">查看最新的留学政策、申请信息和重要通知</p>
-            <div class="module-action">
-              <a href="#" class="action-button">→ 进入系统</a>
-            </div>
-          </div>
-          
-          <div class="dashboard-module-card" onclick="goToModule('profile.html')">
-            <div class="module-icon">👤</div>
-            <div class="module-status status-enabled">已启用</div>
-            <h3 class="dashboard-module-title">个人资料管理</h3>
-            <p class="dashboard-module-description">管理您的个人信息，包括姓名、学号、年级等</p>
-            <div class="module-action">
-              <a href="#" class="action-button">→ 进入系统</a>
-            </div>
-          </div>
-          
-          <div class="dashboard-module-card">
-            <div class="module-icon">📚</div>
-            <div class="module-status status-disabled">未启用</div>
-            <h3 class="dashboard-module-title">文档管理系统</h3>
-            <p class="dashboard-module-description">文件上传、存储和管理系统</p>
-            <div class="module-action">
-              <span class="action-button action-disabled">🔒 该系统当前不可用</span>
-            </div>
+    <main class="portal-main dashboard-main">
+      <section class="hub-shell fade-in-up">
+        <div class="hub-card fade-in-up delay-1">
+          <h1 class="portal-title">欢迎使用AberdeenIMS</h1>
+          <p class="portal-subtitle">阿伯丁学院智慧管理平台</p>
+
+          <div class="hub-grid">
+            <article class="hub-module-card teacher-only fade-in-up delay-2" data-target="students.html" style="display: none;">
+              <div class="hub-module-head">
+                <div>
+                  <h3 class="hub-module-title">学生信息管理</h3>
+                  <span class="hub-status status-enabled">已启用</span>
+                </div>
+                <div class="hub-icon">👥</div>
+              </div>
+              <p class="hub-module-desc">查看所有学生信息和上传的文档资料</p>
+              <div class="hub-module-foot">→ 进入系统</div>
+            </article>
+
+            <article class="hub-module-card fade-in-up delay-2" data-target="chat.html">
+              <div class="hub-module-head">
+                <div>
+                  <h3 class="hub-module-title">师生互动交流</h3>
+                  <span class="hub-status status-enabled">已启用</span>
+                </div>
+                <div class="hub-icon">💬</div>
+              </div>
+              <p class="hub-module-desc">与老师和同学进行实时交流，获取留学指导和帮助</p>
+              <div class="hub-module-foot">→ 进入系统</div>
+            </article>
+
+            <article class="hub-module-card fade-in-up delay-3" data-target="news.html">
+              <div class="hub-module-head">
+                <div>
+                  <h3 class="hub-module-title">留学信息发布</h3>
+                  <span class="hub-status status-enabled">已启用</span>
+                </div>
+                <div class="hub-icon">📰</div>
+              </div>
+              <p class="hub-module-desc">查看最新留学政策、申请资讯和重要通知</p>
+              <div class="hub-module-foot">→ 进入系统</div>
+            </article>
+
+            <article class="hub-module-card fade-in-up delay-3" data-target="profile.html">
+              <div class="hub-module-head">
+                <div>
+                  <h3 class="hub-module-title">个人资料管理</h3>
+                  <span class="hub-status status-enabled">已启用</span>
+                </div>
+                <div class="hub-icon">👤</div>
+              </div>
+              <p class="hub-module-desc">维护姓名、学号、年级、班级等基础信息</p>
+              <div class="hub-module-foot">→ 进入系统</div>
+            </article>
+
+            <article class="hub-module-card is-disabled fade-in-up delay-4" aria-disabled="true">
+              <div class="hub-module-head">
+                <div>
+                  <h3 class="hub-module-title">文档管理系统</h3>
+                  <span class="hub-status status-disabled">未启用</span>
+                </div>
+                <div class="hub-icon">📚</div>
+              </div>
+              <p class="hub-module-desc">文件上传、存储和归档功能正在升级中</p>
+              <div class="hub-module-foot disabled">🔒 该系统当前不可用</div>
+            </article>
           </div>
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
 
-    <!-- 底部信息 -->
-    <div class="dashboard-footer">
-      <div class="footer-content">
-        <div>©2025 华南师范大学阿伯丁数据科学与人工智能学院 保留所有权利</div>
-        <div class="footer-links">
-          <a href="#">关于我们</a>
-          <a href="#">系统状态</a>
-        </div>
-        <div>版本 2.1.0-beta.2</div>
-      </div>
-    </div>
-    
-    <!-- 警告横幅 -->
-    <div class="warning-banner">
-      本平台为联网平台，请勿上传涉密文件
-    </div>
-
-    <!-- 右上角信息面板 -->
-    <div id="profile-popover" style="display:none; position:fixed; top:80px; right:20px; background:#fff; border:1px solid #eee; box-shadow:0 4px 20px rgba(0,0,0,.08); border-radius:10px; padding:12px; min-width:260px; z-index:1000;">
-      <h3 style="margin-top:0;">我的信息</h3>
+    <div id="profile-popover" class="profile-popover" style="display:none;">
+      <h3>我的信息</h3>
       <div id="profile-basic">加载中...</div>
-      <div style="margin-top:8px; display:flex; gap:8px;">
-        <button class="button" onclick="Modules.openProfile(); toggleProfile(false)">编辑资料</button>
-        <button class="button" onclick="Auth.signOut(); location.href='index.html'">退出登录</button>
+      <div class="popover-actions">
+        <button class="portal-mini-btn" onclick="goToModule('profile.html'); toggleProfile(false);">编辑资料</button>
+        <button class="portal-mini-btn danger" onclick="Auth.signOut(); location.href='index.html';">退出登录</button>
       </div>
     </div>
+
+    <footer class="portal-footer-line">
+      <span>© 2026 华南师范大学阿伯丁学院</span>
+      <span>关于我们 | 系统状态</span>
+      <span>v2.1.0-beta.2</span>
+    </footer>
+    <div class="portal-warning">本平台为联网平台，请勿上传涉密文件</div>
 
     <script src="./js/api.js"></script>
     <script src="./js/auth.js"></script>
     <script src="./js/dashboard.js"></script>
-    <script>
-      // 更新用户信息显示
-      document.addEventListener('DOMContentLoaded', function() {
-        // 获取用户信息并更新显示
-        if (typeof Auth !== 'undefined' && Auth.state.user) {
-          const user = Auth.state.user;
-          const usernameElement = document.getElementById('username');
-          const avatarElement = document.getElementById('user-avatar');
-          
-          if (usernameElement) {
-            usernameElement.textContent = user.name || user.username || '用户';
-          }
-          
-          if (avatarElement) {
-            const name = user.name || user.username || 'U';
-            avatarElement.textContent = name.charAt(0).toUpperCase();
-          }
-        }
-      });
-    </script>
   </body>
-  </html>
+</html>

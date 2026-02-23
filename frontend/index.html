@@ -3,91 +3,128 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Study Abroad Portal</title>
+    <title>AberdeenIMS - 登录</title>
     <link rel="stylesheet" href="./styles/styles.css" />
   </head>
-  <body>
-    <header>
-      <h1>Study Abroad</h1>
-    </header>
-    <main>
-      <section>
-        <h2>注册</h2>
-        <form id="register-form" onsubmit="return Auth.submitRegister(event)">
-          <input type="email" name="email" placeholder="邮箱" required />
-          <input type="text" name="name" placeholder="昵称（可选）" />
-          <input type="password" name="password" placeholder="密码" required />
-          
-          <div class="role-selection">
-            <label class="role-label">选择用户类型：</label>
-            <div class="role-options">
-              <label class="role-option">
-                <input type="radio" name="role" value="student" checked />
-                <span class="role-card">
-                  <div class="role-icon">🎓</div>
-                  <div class="role-info">
-                    <div class="role-title">学生</div>
-                    <div class="role-desc">申请预约、查看课程、与老师交流</div>
-                  </div>
-                </span>
-              </label>
-              <label class="role-option">
-                <input type="radio" name="role" value="teacher" />
-                <span class="role-card">
-                  <div class="role-icon">👨‍🏫</div>
-                  <div class="role-info">
-                    <div class="role-title">老师</div>
-                    <div class="role-desc">管理预约、查看学生、提供指导</div>
-                  </div>
-                </span>
-              </label>
-            </div>
-          </div>
-          
-          <button class="button" type="submit">注册</button>
-        </form>
-      </section>
-      <section>
-        <h2>登录</h2>
-        <form id="login-form" onsubmit="return Auth.submitLogin(event)">
-          <input type="email" name="email" placeholder="邮箱" required />
-          <input type="password" name="password" placeholder="密码" required />
-          <button class="button" type="submit">登录</button>
-        </form>
-        <div id="auth-status"></div>
-      </section>
-      <section>
-        <h2>快速测试</h2>
-        <div class="test-accounts">
-          <div class="test-account">
-            <h3>学生账号测试</h3>
-            <p>邮箱: student@test.com</p>
-            <p>密码: 123456</p>
-            <button class="button" onclick="fillLoginForm('student@test.com', '123456')">快速登录学生账号</button>
-          </div>
-          <div class="test-account">
-            <h3>老师账号测试</h3>
-            <p>邮箱: teacher@test.com</p>
-            <p>密码: 123456</p>
-            <button class="button" onclick="fillLoginForm('teacher@test.com', '123456')">快速登录老师账号</button>
-          </div>
+  <body class="portal-page login-page">
+    <div class="portal-bg" aria-hidden="true">
+      <span class="bg-icon i1">◌</span><span class="bg-icon i2">◍</span><span class="bg-icon i3">⌘</span><span class="bg-icon i4">⌁</span>
+      <span class="bg-icon i5">◔</span><span class="bg-icon i6">⌂</span><span class="bg-icon i7">⌗</span><span class="bg-icon i8">⌁</span>
+      <span class="bg-icon i9">◌</span><span class="bg-icon i10">◍</span><span class="bg-icon i11">⌘</span><span class="bg-icon i12">⌂</span>
+      <span class="bg-icon i13">⌁</span><span class="bg-icon i14">◔</span><span class="bg-icon i15">⌗</span><span class="bg-icon i16">◌</span>
+      <span class="bg-icon i17">⌂</span><span class="bg-icon i18">◍</span><span class="bg-icon i19">⌘</span><span class="bg-icon i20">⌁</span>
+    </div>
+
+    <header class="portal-topbar">
+      <div class="brand-group">
+        <div class="brand-shield">A</div>
+        <div class="brand-text">
+          <div class="brand-cn">华南师范大学阿伯丁学院</div>
+          <div class="brand-en">School of Data Science and Artificial Intelligence</div>
         </div>
-        <div class="api-test">
-          <h3>API测试</h3>
-          <button class="button" onclick="API.get('/health').then(x=>alert(JSON.stringify(x)))">/health</button>
-          <button class="button" onclick="Auth.me()">/api/users/me</button>
+        <div class="brand-mark">IMS</div>
+      </div>
+      <div class="portal-top-actions">
+        <div class="portal-lang">简体中文</div>
+        <div class="portal-alert">部分系统离线</div>
+        <div class="portal-user-mini">
+          <span class="mini-avatar">访</span>
+          <span>访客</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="portal-main login-main">
+      <section class="login-shell fade-in-up">
+        <h1 class="portal-title">欢迎使用AberdeenIMS</h1>
+        <p class="portal-subtitle">阿伯丁学院智慧管理平台</p>
+
+        <div class="login-card fade-in-up delay-1">
+          <form id="login-form" class="portal-form" onsubmit="return Auth.submitLogin(event)">
+            <label for="login-email">用户名</label>
+            <input id="login-email" type="email" name="email" placeholder="请输入邮箱" required />
+            <div class="field-hint">用户名默认为注册邮箱</div>
+
+            <div class="field-row">
+              <label for="login-password">密码</label>
+              <a href="#" onclick="return false;" class="field-link">忘记密码?</a>
+            </div>
+            <div class="password-wrap">
+              <input id="login-password" type="password" name="password" placeholder="请输入密码" required />
+              <button id="toggle-password" type="button" class="eye-btn" aria-label="显示或隐藏密码">◔</button>
+            </div>
+
+            <button class="portal-primary-btn" type="submit">登录</button>
+
+            <div class="portal-sep"><span>或</span></div>
+
+            <button class="portal-passkey-btn" type="button" disabled>Passkey登录</button>
+          </form>
+
+          <details class="dev-entry">
+            <summary>开发测试入口</summary>
+            <div class="dev-buttons">
+              <button class="dev-btn quick-fill-btn" type="button" data-email="student@test.com" data-password="123456">填充学生测试账号</button>
+              <button class="dev-btn quick-fill-btn" type="button" data-email="teacher@test.com" data-password="123456">填充老师测试账号</button>
+            </div>
+          </details>
+
+          <details class="register-entry">
+            <summary>没有账号？点击注册</summary>
+            <form id="register-form" class="portal-form register-form" onsubmit="return Auth.submitRegister(event)">
+              <label for="reg-email">邮箱</label>
+              <input id="reg-email" type="email" name="email" placeholder="请输入邮箱" required />
+
+              <label for="reg-name">昵称（可选）</label>
+              <input id="reg-name" type="text" name="name" placeholder="请输入昵称" />
+
+              <label for="reg-password">密码</label>
+              <input id="reg-password" type="password" name="password" placeholder="请输入密码" required />
+
+              <div class="role-lite">
+                <label><input type="radio" name="role" value="student" checked /> 学生</label>
+                <label><input type="radio" name="role" value="teacher" /> 老师</label>
+              </div>
+
+              <button class="portal-primary-btn" type="submit">注册</button>
+            </form>
+          </details>
+
+          <div id="auth-status" class="auth-status"></div>
         </div>
       </section>
     </main>
 
+    <footer class="portal-footer-line">
+      <span>© 2026 华南师范大学阿伯丁学院</span>
+      <span>系统状态</span>
+      <span>v2.1.0-beta.2</span>
+    </footer>
+    <div class="portal-warning">本平台为联网平台，请勿上传涉密文件</div>
+
     <script src="./js/api.js"></script>
     <script src="./js/auth.js"></script>
     <script>
-      function fillLoginForm(email, password) {
-        const loginForm = document.getElementById('login-form');
-        loginForm.email.value = email;
-        loginForm.password.value = password;
-      }
+      document.addEventListener('DOMContentLoaded', function () {
+        const pwdInput = document.getElementById('login-password');
+        const toggleBtn = document.getElementById('toggle-password');
+        if (toggleBtn && pwdInput) {
+          toggleBtn.addEventListener('click', function () {
+            const isPassword = pwdInput.type === 'password';
+            pwdInput.type = isPassword ? 'text' : 'password';
+            toggleBtn.textContent = isPassword ? '◉' : '◔';
+          });
+        }
+
+        const quickBtns = document.querySelectorAll('.quick-fill-btn');
+        quickBtns.forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            const loginForm = document.getElementById('login-form');
+            loginForm.email.value = btn.dataset.email;
+            loginForm.password.value = btn.dataset.password;
+          });
+        });
+      });
     </script>
   </body>
 </html>
