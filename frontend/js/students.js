@@ -1,333 +1,402 @@
-// 学生管理模块
+﻿let allStudents = [];
 
-let allStudents = [];
-let currentStudentDetail = null;
+const state = {
+  activeStudentId: null,
+  detailRequestSeq: 0,
+};
 
-// 页面加载时初始化
-document.addEventListener('DOMContentLoaded', async function() {
-  // 检查登录状态和权限
-  try {
-    // 先等待认证检查完成
-    await Auth.checkAuth();
-    
-    // 检查是否登录
-    if (!Auth.state.token || !Auth.state.user) {
-      alert('请先登录');
-      location.href = 'index.html';
-      return;
-    }
-    
-    // 检查是否为教师
-    if (Auth.state.user.role !== 'teacher') {
-      alert('权限不足，仅教师可访问');
-      location.href = 'dashboard.html';
-      return;
-    }
-    
-    // 加载学生列表
-    loadStudents();
-    
-    // 绑定搜索事件
-    const searchInput = document.getElementById('search-input');
-    if (searchInput) {
-      searchInput.addEventListener('input', handleSearch);
-    }
-  } catch (error) {
-    console.error('认证失败:', error);
-    alert('请先登录');
-    location.href = 'index.html';
-  }
-
-  // 点击弹窗外部关闭
-  const modal = document.getElementById('student-modal');
-  if (modal) {
-    modal.addEventListener('click', function(e) {
-      if (e.target === modal) {
-        closeModal();
-      }
-    });
-  }
-});
-
-// 加载学生列表
-async function loadStudents() {
-  const listContainer = document.getElementById('students-list');
-  
-  try {
-    const response = await fetch('http://127.0.0.1:5000/api/users/students', {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${Auth.state.access}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error('获取学生列表失败');
-    }
-
-    const data = await response.json();
-    allStudents = data.students || [];
-    
-    renderStudents(allStudents);
-  } catch (error) {
-    console.error('加载学生列表失败:', error);
-    listContainer.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state-icon">⚠️</div>
-        <div>加载失败：${error.message}</div>
-      </div>
-    `;
-  }
+function getAuthHeaders() {
+  return { Authorization: `Bearer ${Auth.state.access}` };
 }
 
-// 渲染学生列表
-function renderStudents(students) {
-  const listContainer = document.getElementById('students-list');
-  
-  if (!students || students.length === 0) {
-    listContainer.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state-icon">👤</div>
-        <div>暂无学生数据</div>
-      </div>
-    `;
-    return;
-  }
-
-  listContainer.className = 'students-grid';
-  listContainer.innerHTML = students.map(student => `
-    <div class="student-card" onclick="openStudentDetail(${student.id})">
-      <div class="student-header">
-        <div class="student-avatar">${getInitials(student.name)}</div>
-        <div class="student-info">
-          <div class="student-name">${escapeHtml(student.name)}</div>
-          <div class="student-id">${escapeHtml(student.student_id || '未设置学号')}</div>
-        </div>
-      </div>
-      <div class="student-details">
-        <div>📧 ${escapeHtml(student.email)}</div>
-        <div>📚 年级：${escapeHtml(student.grade || '未设置')}</div>
-        <div>🏫 班级：${escapeHtml(student.class_name || '未设置')}</div>
-      </div>
-      <div class="student-stats">
-        <span>📁 ${student.document_count || 0} 个文档</span>
-        <span>🕐 ${formatDate(student.created_at)}</span>
-      </div>
-    </div>
-  `).join('');
-}
-
-// 搜索处理
-function handleSearch(e) {
-  const searchTerm = e.target.value.toLowerCase().trim();
-  
-  if (!searchTerm) {
-    renderStudents(allStudents);
-    return;
-  }
-
-  const filteredStudents = allStudents.filter(student => {
-    return (
-      (student.name && student.name.toLowerCase().includes(searchTerm)) ||
-      (student.student_id && student.student_id.toLowerCase().includes(searchTerm)) ||
-      (student.email && student.email.toLowerCase().includes(searchTerm)) ||
-      (student.class_name && student.class_name.toLowerCase().includes(searchTerm)) ||
-      (student.grade && student.grade.toLowerCase().includes(searchTerm))
-    );
-  });
-
-  renderStudents(filteredStudents);
-}
-
-// 打开学生详情
-async function openStudentDetail(studentId) {
-  const modal = document.getElementById('student-modal');
-  modal.classList.add('active');
-  
-  // 显示加载状态
-  document.getElementById('modal-student-name').textContent = '加载中...';
-  
-  try {
-    const response = await fetch(`http://127.0.0.1:5000/api/users/students/${studentId}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${Auth.state.access}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error('获取学生详情失败');
-    }
-
-    const data = await response.json();
-    currentStudentDetail = data;
-    
-    renderStudentDetail(data);
-  } catch (error) {
-    console.error('加载学生详情失败:', error);
-    alert('加载学生详情失败：' + error.message);
-    closeModal();
-  }
-}
-
-// 渲染学生详情
-function renderStudentDetail(data) {
-  const student = data.student;
-  const documents = data.documents || [];
-
-  // 头部信息
-  document.getElementById('modal-avatar').textContent = getInitials(student.name);
-  document.getElementById('modal-student-name').textContent = student.name;
-  document.getElementById('modal-student-id').textContent = `学号：${student.student_id || '未设置'}`;
-  document.getElementById('modal-student-email').textContent = `邮箱：${student.email}`;
-
-  // 基本信息
-  document.getElementById('detail-name').textContent = student.name;
-  document.getElementById('detail-student-id').textContent = student.student_id || '未设置';
-  document.getElementById('detail-grade').textContent = student.grade || '未设置';
-  document.getElementById('detail-class').textContent = student.class_name || '未设置';
-  document.getElementById('detail-email').textContent = student.email;
-  document.getElementById('detail-created').textContent = formatDateTime(student.created_at);
-
-  // 文档列表
-  document.getElementById('doc-count').textContent = documents.length;
-  const docsList = document.getElementById('documents-list');
-  
-  if (documents.length === 0) {
-    docsList.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state-icon">📄</div>
-        <div>该学生尚未上传任何文档</div>
-      </div>
-    `;
-  } else {
-    docsList.innerHTML = documents.map(doc => `
-      <div class="document-item">
-        <div style="display:flex; align-items:center; flex:1; min-width:0;">
-          <div class="document-icon">${getFileIcon(doc.file_type)}</div>
-          <div class="document-info">
-            <div class="document-name">${escapeHtml(doc.name)}</div>
-            <div class="document-meta">
-              ${escapeHtml(doc.category)} · ${formatFileSize(doc.file_size)} · ${formatDateTime(doc.created_at)}
-            </div>
-          </div>
-        </div>
-        <button
-          class="button"
-          style="padding:6px 12px; font-size:12px;"
-          onclick="event.stopPropagation(); viewStudentDocument(${student.id}, ${doc.id})"
-        >
-          查看
-        </button>
-      </div>
-    `).join('');
-  }
-}
-
-// 教师查看学生文档
-async function viewStudentDocument(studentId, documentId) {
-  try {
-    let response = await fetch(`http://127.0.0.1:5000/api/users/students/${studentId}/documents/${documentId}/view`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${Auth.state.access}`
-      }
-    });
-
-    if (response.status === 401) {
-      await Auth.refresh();
-      response = await fetch(`http://127.0.0.1:5000/api/users/students/${studentId}/documents/${documentId}/view`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${Auth.state.access}`
-        }
-      });
-    }
-
-    if (!response.ok) {
-      throw new Error(`查看失败: ${response.statusText}`);
-    }
-
-    const blob = await response.blob();
-    const fileUrl = window.URL.createObjectURL(blob);
-    window.open(fileUrl, '_blank', 'noopener');
-    setTimeout(() => window.URL.revokeObjectURL(fileUrl), 60 * 1000);
-  } catch (error) {
-    console.error('查看学生文档失败:', error);
-    alert('查看文档失败：' + (error.message || '请稍后重试'));
-  }
-}
-
-// 关闭弹窗
-function closeModal() {
-  const modal = document.getElementById('student-modal');
-  modal.classList.remove('active');
-  currentStudentDetail = null;
-}
-
-// 工具函数：获取首字母
-function getInitials(name) {
-  if (!name) return 'S';
-  return name.charAt(0).toUpperCase();
-}
-
-// 工具函数：HTML转义
-function escapeHtml(text) {
-  if (!text) return '';
-  const div = document.createElement('div');
-  div.textContent = text;
+function escapeHtml(value) {
+  const div = document.createElement("div");
+  div.textContent = value == null ? "" : String(value);
   return div.innerHTML;
 }
 
-// 工具函数：格式化日期
-function formatDate(dateString) {
-  if (!dateString) return '未知';
-  const date = new Date(dateString);
-  const now = new Date();
-  const diff = now - date;
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-  
-  if (days === 0) return '今天';
-  if (days === 1) return '昨天';
+function formatDateTime(value) {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  const hh = String(date.getHours()).padStart(2, "0");
+  const mi = String(date.getMinutes()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
+}
+
+function formatDateAgo(value) {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  const days = Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24));
+  if (days <= 0) return "今天";
+  if (days === 1) return "昨天";
   if (days < 7) return `${days}天前`;
   if (days < 30) return `${Math.floor(days / 7)}周前`;
-  if (days < 365) return `${Math.floor(days / 30)}月前`;
+  if (days < 365) return `${Math.floor(days / 30)}个月前`;
   return `${Math.floor(days / 365)}年前`;
 }
 
-// 工具函数：格式化日期时间
-function formatDateTime(dateString) {
-  if (!dateString) return '未知';
-  const date = new Date(dateString);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${year}-${month}-${day} ${hours}:${minutes}`;
-}
-
-// 工具函数：格式化文件大小
 function formatFileSize(bytes) {
-  if (!bytes || bytes === 0) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  if (!bytes) return "0 B";
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  let n = bytes;
+  let unitIndex = 0;
+  while (n >= 1024 && unitIndex < units.length - 1) {
+    n /= 1024;
+    unitIndex += 1;
+  }
+  return `${n.toFixed(unitIndex === 0 ? 0 : 2)} ${units[unitIndex]}`;
 }
 
-// 工具函数：获取文件图标
-function getFileIcon(fileType) {
-  if (!fileType) return '📄';
-  const type = fileType.toLowerCase();
-  if (type.includes('pdf')) return '📕';
-  if (type.includes('doc') || type.includes('word')) return '📘';
-  if (type.includes('xls') || type.includes('excel')) return '📗';
-  if (type.includes('ppt') || type.includes('powerpoint')) return '📙';
-  if (type.includes('image') || type.includes('jpg') || type.includes('png')) return '🖼️';
-  if (type.includes('zip') || type.includes('rar')) return '📦';
-  return '📄';
+function getInitial(name) {
+  if (!name) return "S";
+  return String(name).trim().charAt(0).toUpperCase() || "S";
 }
 
+function getFileIcon(ext) {
+  const key = String(ext || "").toLowerCase();
+  if (["png", "jpg", "jpeg", "gif", "bmp", "webp"].includes(key)) return "🖼";
+  if (["pdf"].includes(key)) return "📄";
+  if (["doc", "docx"].includes(key)) return "📝";
+  if (["xls", "xlsx"].includes(key)) return "📊";
+  if (["ppt", "pptx"].includes(key)) return "📽";
+  if (["zip", "rar", "7z"].includes(key)) return "🗜";
+  return "📁";
+}
+
+async function ensureTeacher() {
+  await Auth.checkAuth();
+  if (!Auth.state.user || Auth.state.user.role !== "teacher") {
+    alert("权限不足，仅教师可访问");
+    window.location.href = "dashboard.html";
+    return false;
+  }
+
+  const usernameEl = document.getElementById("username");
+  const avatarEl = document.getElementById("user-avatar");
+  if (usernameEl) {
+    usernameEl.textContent = Auth.state.user.name || Auth.state.user.email || "教师";
+  }
+  if (avatarEl) {
+    avatarEl.textContent = getInitial(Auth.state.user.name || Auth.state.user.email || "T");
+  }
+
+  return true;
+}
+
+async function fetchStudents() {
+  const container = document.getElementById("students-list");
+  container.className = "loading";
+  container.innerHTML = "加载中...";
+
+  const data = await API.get("/api/users/students", { headers: getAuthHeaders() });
+  allStudents = Array.isArray(data.students) ? data.students : [];
+  renderStudents(allStudents);
+}
+
+function renderStudents(list) {
+  const container = document.getElementById("students-list");
+  if (!Array.isArray(list) || list.length === 0) {
+    container.className = "empty-state";
+    container.innerHTML = '<div class="empty-state-icon">👥</div><div>暂无学生数据</div>';
+    return;
+  }
+
+  container.className = "students-grid";
+  container.innerHTML = list
+    .map(
+      (student) => `
+      <div class="student-card" data-student-id="${student.id}" role="button" tabindex="0">
+        <div class="student-header">
+          <div class="student-avatar">${escapeHtml(getInitial(student.name))}</div>
+          <div class="student-info">
+            <div class="student-name">${escapeHtml(student.name || "未命名")}</div>
+            <div class="student-id">${escapeHtml(student.student_id || "未设置学号")}</div>
+          </div>
+        </div>
+        <div class="student-details">
+          <div>邮箱: ${escapeHtml(student.email || "-")}</div>
+          <div>年级: ${escapeHtml(student.grade || "-")}</div>
+          <div>班级: ${escapeHtml(student.class_name || "-")}</div>
+        </div>
+        <div class="student-stats">
+          <span>${Number(student.document_count || 0)} 个文档</span>
+          <span>${escapeHtml(formatDateAgo(student.created_at))}</span>
+        </div>
+      </div>
+    `
+    )
+    .join("");
+}
+
+function bindStudentCardEvents() {
+  const container = document.getElementById("students-list");
+  if (!container) return;
+
+  container.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const card = target.closest(".student-card[data-student-id]");
+    if (!card) return;
+    const studentId = Number(card.dataset.studentId);
+    if (studentId) {
+      openStudentDetail(studentId);
+    }
+  });
+
+  container.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const card = target.closest(".student-card[data-student-id]");
+    if (!card) return;
+    event.preventDefault();
+    const studentId = Number(card.dataset.studentId);
+    if (studentId) {
+      openStudentDetail(studentId);
+    }
+  });
+}
+
+function bindSearch() {
+  const input = document.getElementById("search-input");
+  if (!input) return;
+
+  input.addEventListener("input", (event) => {
+    const keyword = String(event.target.value || "").trim().toLowerCase();
+    if (!keyword) {
+      renderStudents(allStudents);
+      return;
+    }
+
+    const filtered = allStudents.filter((student) => {
+      return [student.name, student.student_id, student.email, student.grade, student.class_name]
+        .filter(Boolean)
+        .some((field) => String(field).toLowerCase().includes(keyword));
+    });
+    renderStudents(filtered);
+  });
+}
+
+async function openStudentDetail(studentId) {
+  const requestSeq = ++state.detailRequestSeq;
+  state.activeStudentId = studentId;
+  showModal(true);
+  setModalLoading();
+
+  try {
+    const [detail, docsResp] = await Promise.all([
+      API.get(`/api/users/students/${studentId}`, { headers: getAuthHeaders() }),
+      API.get(`/api/users/students/${studentId}/documents`, { headers: getAuthHeaders() }),
+    ]);
+
+    // Ignore stale response to avoid showing student/doc mismatch.
+    if (requestSeq !== state.detailRequestSeq) {
+      return;
+    }
+
+    const documents = Array.isArray(docsResp.documents) ? docsResp.documents : detail.documents || [];
+    renderStudentDetail(detail.student, documents);
+  } catch (error) {
+    console.error("加载学生详情失败:", error);
+    alert(`加载学生详情失败: ${error.message || error}`);
+    showModal(false);
+  }
+}
+
+function setModalLoading() {
+  const nameEl = document.getElementById("modal-student-name");
+  const docsEl = document.getElementById("documents-list");
+  if (nameEl) nameEl.textContent = "加载中...";
+  if (docsEl) docsEl.innerHTML = '<div class="loading">正在加载学生详情...</div>';
+}
+
+function renderStudentDetail(student, documents) {
+  if (!student) return;
+  state.activeStudentId = Number(student.id) || state.activeStudentId;
+
+  const safeName = student.name || "未命名";
+  document.getElementById("modal-avatar").textContent = getInitial(safeName);
+  document.getElementById("modal-student-name").textContent = safeName;
+  document.getElementById("modal-student-id").textContent = `学号: ${student.student_id || "未设置"}`;
+  document.getElementById("modal-student-email").textContent = `邮箱: ${student.email || "-"}`;
+
+  document.getElementById("detail-name").textContent = student.name || "-";
+  document.getElementById("detail-student-id").textContent = student.student_id || "-";
+  document.getElementById("detail-grade").textContent = student.grade || "-";
+  document.getElementById("detail-class").textContent = student.class_name || "-";
+  document.getElementById("detail-email").textContent = student.email || "-";
+  document.getElementById("detail-created").textContent = formatDateTime(student.created_at);
+
+  const count = Array.isArray(documents) ? documents.length : 0;
+  document.getElementById("doc-count").textContent = String(count);
+
+  const docsEl = document.getElementById("documents-list");
+  if (!count) {
+    docsEl.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><div>该学生尚未上传文档</div></div>';
+    return;
+  }
+
+  docsEl.innerHTML = documents
+    .map(
+      (doc) => `
+      <div class="document-item">
+        <div style="display:flex;align-items:center;flex:1;min-width:0;">
+          <div class="document-icon">${getFileIcon(doc.file_type)}</div>
+          <div class="document-info">
+            <div class="document-name">${escapeHtml(doc.name || doc.original_name || "未命名文档")}</div>
+            <div class="document-meta">${escapeHtml(doc.file_type || "-")} · ${escapeHtml(formatFileSize(doc.file_size))} · ${escapeHtml(formatDateTime(doc.created_at))}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="button" data-action="view-doc" data-view-url="${escapeHtml(doc.view_url || "")}" data-student-id="${student.id}" data-doc-id="${doc.id}" style="padding:6px 12px;font-size:12px;">查看</button>
+          <button class="button" data-action="download-doc" data-download-url="${escapeHtml(doc.download_url || "")}" data-student-id="${student.id}" data-doc-id="${doc.id}" style="padding:6px 12px;font-size:12px;">下载</button>
+        </div>
+      </div>
+    `
+    )
+    .join("");
+}
+
+async function openTeacherDocByUrl(endpoint, mode) {
+  if (!endpoint) return;
+  const endpointPath = String(endpoint).startsWith("/") ? endpoint : `/${endpoint}`;
+
+  // Open a blank tab synchronously to avoid popup blockers for async fetch.
+  const previewWindow = mode === "view" ? window.open("about:blank", "_blank") : null;
+  console.log("[doc-open] endpoint:", endpointPath, "mode:", mode);
+
+  try {
+    if (previewWindow && !previewWindow.closed) {
+      previewWindow.document.open();
+      previewWindow.document.write("<!doctype html><html><head><meta charset='utf-8'><title>文档加载中</title></head><body style='font-family:system-ui;padding:24px;color:#444;'>文档加载中...</body></html>");
+      previewWindow.document.close();
+    }
+
+    const response = await fetch(`${API.baseURL}${endpointPath}`, {
+      method: "GET",
+      headers: getAuthHeaders(),
+    });
+
+    if (response.status === 401) {
+      if (previewWindow && !previewWindow.closed) {
+        previewWindow.close();
+      }
+      await Auth.refresh();
+      return openTeacherDocByUrl(endpointPath, mode);
+    }
+
+    if (!response.ok) {
+      throw new Error(`请求失败: ${response.status}`);
+    }
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    console.log("[doc-open] success:", { endpoint: endpointPath, type: blob.type, size: blob.size });
+
+    if (mode === "download") {
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "document";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => window.URL.revokeObjectURL(url), 3000);
+      return;
+    }
+
+    if (previewWindow) {
+      const escapedUrl = String(url).replace(/"/g, "&quot;");
+      const mime = (blob.type || "application/octet-stream").replace(/"/g, "");
+      previewWindow.document.open();
+      previewWindow.document.write(
+        `<!doctype html><html><head><meta charset="utf-8"><title>文档预览</title></head>` +
+        `<body style="margin:0;background:#f5f7fa;">` +
+        `<iframe src="${escapedUrl}" title="doc-preview" style="border:0;width:100vw;height:100vh;"></iframe>` +
+        `<noscript><p style="padding:12px;">无法预览，请启用 JavaScript。文件类型: ${mime}</p></noscript>` +
+        `</body></html>`
+      );
+      previewWindow.document.close();
+      try {
+        previewWindow.opener = null;
+      } catch (_) {}
+    } else {
+      // Fallback: current tab preview if popup is blocked.
+      window.location.href = url;
+    }
+    setTimeout(() => window.URL.revokeObjectURL(url), 5 * 60 * 1000);
+  } catch (error) {
+    if (previewWindow && !previewWindow.closed) {
+      previewWindow.close();
+    }
+    console.error("查看/下载学生文档失败:", error);
+    alert(`文档操作失败: ${error.message || error}`);
+  }
+}
+
+function bindModalEvents() {
+  const modal = document.getElementById("student-modal");
+  if (!modal) return;
+
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) {
+      showModal(false);
+      return;
+    }
+
+    const btn = event.target.closest("button[data-action]");
+    if (!btn) return;
+
+    const action = btn.dataset.action;
+    if (action === "view-doc") {
+      const endpoint = btn.dataset.viewUrl || "";
+      openTeacherDocByUrl(endpoint, "view");
+    } else if (action === "download-doc") {
+      const endpoint = btn.dataset.downloadUrl || "";
+      openTeacherDocByUrl(endpoint, "download");
+    }
+  });
+}
+
+function showModal(show) {
+  const modal = document.getElementById("student-modal");
+  if (!modal) return;
+
+  if (show) {
+    modal.classList.add("active");
+    modal.classList.add("is-open");
+  } else {
+    modal.classList.remove("active");
+    modal.classList.remove("is-open");
+    state.activeStudentId = null;
+    state.detailRequestSeq += 1;
+  }
+}
+
+window.closeModal = function closeModal() {
+  showModal(false);
+};
+
+window.closeStudentModal = window.closeModal;
+
+async function initStudentsPage() {
+  try {
+    const allowed = await ensureTeacher();
+    if (!allowed) return;
+
+    bindSearch();
+    bindStudentCardEvents();
+    bindModalEvents();
+    await fetchStudents();
+  } catch (error) {
+    console.error("初始化学生管理页面失败:", error);
+    alert("请先登录");
+    window.location.href = "index.html";
+  }
+}
+
+document.addEventListener("DOMContentLoaded", initStudentsPage);

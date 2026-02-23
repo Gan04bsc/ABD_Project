@@ -1,9 +1,9 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>学生管理 - 阿伯丁留学服务平台</title>
+    <title>学生信息管理</title>
     <link rel="stylesheet" href="./styles/styles.css" />
     <style>
       .students-container {
@@ -25,21 +25,6 @@
         font-size: 28px;
         font-weight: 600;
         color: #1a1a1a;
-      }
-
-      .back-button {
-        padding: 10px 20px;
-        background: #f5f5f5;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        font-size: 14px;
-        color: #666;
-        transition: all 0.2s;
-      }
-
-      .back-button:hover {
-        background: #e0e0e0;
       }
 
       .top-back-button {
@@ -142,7 +127,6 @@
         color: #888;
       }
 
-      /* 学生详情弹窗 */
       .modal {
         display: none;
         position: fixed;
@@ -160,12 +144,20 @@
         align-items: center;
         justify-content: center;
         padding: 20px;
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+      }
+
+      .modal.active .modal-content {
+        opacity: 1;
+        transform: scale(1) translateY(0);
       }
 
       .modal-content {
         background: white;
         border-radius: 16px;
-        max-width: 800px;
+        max-width: 900px;
         width: 100%;
         max-height: 90vh;
         overflow-y: auto;
@@ -279,11 +271,6 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        transition: all 0.2s;
-      }
-
-      .document-item:hover {
-        background: #e9ecef;
       }
 
       .document-icon {
@@ -334,12 +321,11 @@
     </style>
   </head>
   <body>
-    <!-- 顶部导航栏 -->
     <div class="header-bar">
       <div class="logo-section">
-        <button class="top-back-button" onclick="location.href='dashboard.html'">← 返回主页</button>
+        <button class="top-back-button" onclick="location.href='dashboard.html'">返回主页</button>
         <div class="logo">A</div>
-        <h1 class="header-title">华南师范大学阿伯丁 数据科学与人工智能学院</h1>
+        <h1 class="header-title">学生信息管理</h1>
       </div>
       <div class="header-actions">
         <div class="user-info" id="profile-btn">
@@ -349,22 +335,23 @@
       </div>
     </div>
 
-    <!-- 主要内容 -->
     <div class="students-container">
       <div class="page-header">
         <h1 class="page-title">学生信息管理</h1>
       </div>
 
       <div class="search-bar">
-        <input type="text" class="search-input" id="search-input" placeholder="搜索学生姓名、学号、班级..." />
+        <input
+          type="text"
+          class="search-input"
+          id="search-input"
+          placeholder="搜索姓名、学号、邮箱、年级、班级"
+        />
       </div>
 
-      <div id="students-list" class="loading">
-        加载中...
-      </div>
+      <div id="students-list" class="loading">加载中...</div>
     </div>
 
-    <!-- 学生详情弹窗 -->
     <div id="student-modal" class="modal">
       <div class="modal-content">
         <div class="modal-header">
@@ -373,8 +360,9 @@
             <div class="modal-student-details">
               <h2 id="modal-student-name">学生姓名</h2>
               <div class="modal-student-meta">
-                <span id="modal-student-id">学号：-</span> | 
-                <span id="modal-student-email">邮箱：-</span>
+                <span id="modal-student-id">学号: -</span>
+                |
+                <span id="modal-student-email">邮箱: -</span>
               </div>
             </div>
           </div>
@@ -383,7 +371,7 @@
 
         <div class="modal-body">
           <div class="info-section">
-            <h3>📋 基本信息</h3>
+            <h3>基本信息</h3>
             <div class="info-grid">
               <div class="info-item">
                 <div class="info-label">姓名</div>
@@ -413,10 +401,8 @@
           </div>
 
           <div class="info-section">
-            <h3>📁 上传的文档 (<span id="doc-count">0</span>)</h3>
-            <div id="documents-list" class="documents-list">
-              <!-- 文档列表将在这里动态生成 -->
-            </div>
+            <h3>上传文档（<span id="doc-count">0</span>）</h3>
+            <div id="documents-list" class="documents-list"></div>
           </div>
         </div>
       </div>
@@ -424,7 +410,6 @@
 
     <script src="./js/api.js"></script>
     <script src="./js/auth.js"></script>
-    <script src="./js/students.js"></script>
+    <script src="./js/students.js?v=20260223e"></script>
   </body>
 </html>
-
