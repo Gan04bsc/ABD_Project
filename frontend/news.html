@@ -1,423 +1,1222 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>留学信息发布 - 阿伯丁留学服务平台</title>
-    <link rel="stylesheet" href="./styles/styles.css" />
-    <style>
-      .news-container {
-        width: 100%;
-        max-width: none;
-        margin: 0;
-        padding: 96px 24px 24px;
-        box-sizing: border-box;
-      }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>留学信息发布 - 阿伯丁留学服务平台</title>
+  <link rel="stylesheet" href="./styles/styles.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" />
+  <style>
+    .news-page {
+      background: #ffffff !important;
+      min-height: 100vh;
+    }
 
-      .news-page {
-        background: #ffffff !important;
-        min-height: 100vh;
-      }
+    .news-container {
+      width: 100%;
+      max-width: none;
+      margin: 0;
+      padding: 96px 24px 24px;
+      box-sizing: border-box;
+    }
 
-      .page-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 24px;
-      }
+    .news-top-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
 
-      .page-title {
-        font-size: 28px;
-        font-weight: 600;
-        color: #1a1a1a;
-        margin: 0;
-      }
+    .top-back-button {
+      padding: 8px 14px;
+      background: #f1f4fb;
+      border: 1px solid #dbe3f5;
+      border-radius: 18px;
+      cursor: pointer;
+      font-size: 13px;
+      color: #4b5f86;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
 
-      .toolbar-actions {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
+    .top-back-button:hover {
+      background: #e7eefc;
+    }
 
-      .news-top-left {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        min-width: 0;
-      }
+    .news-top-title {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      margin: 0;
+      font-size: 32px;
+      font-weight: 700;
+      color: #1d2538;
+      pointer-events: none;
+    }
 
-      .top-back-button {
-        padding: 8px 14px;
-        background: #f1f4fb;
-        border: 1px solid #dbe3f5;
-        border-radius: 18px;
-        cursor: pointer;
-        font-size: 13px;
-        color: #4b5f86;
-        transition: all 0.2s;
-        white-space: nowrap;
-      }
+    .tools-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
 
-      .top-back-button:hover {
-        background: #e7eefc;
-      }
+    .search-bar {
+      flex: 1;
+    }
 
+    .search-input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #d9e2f5;
+      border-radius: 10px;
+      font-size: 14px;
+      box-sizing: border-box;
+      background: #fff;
+    }
+
+    .publish-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .publish-modal-body {
+      padding-top: 12px;
+    }
+
+    .publish-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .publish-input,
+    .publish-textarea {
+      width: 100%;
+      border: 1px solid #d9e2f5;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 14px;
+      box-sizing: border-box;
+      font-family: inherit;
+    }
+
+    .publish-textarea {
+      min-height: 72px;
+      resize: vertical;
+    }
+
+    #editor-wrapper {
+      border: 1px solid #d9e2f5;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #fff;
+      position: relative;
+    }
+
+    #editor {
+      min-height: 260px;
+    }
+
+    .drag-drop-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: rgba(232, 240, 254, 0.85);
+      border: 2px dashed #1a73e8;
+      border-radius: 8px;
+      color: #1a73e8;
+      font-size: 15px;
+      font-weight: 600;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.16s ease, visibility 0.16s ease;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .drag-drop-overlay .overlay-icon {
+      font-size: 26px;
+      line-height: 1;
+    }
+
+    #editor-wrapper.is-dragging .drag-drop-overlay {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .publish-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .news-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 16px;
+    }
+
+    .news-card {
+      background: #fff;
+      border: 1px solid #e7ecf7;
+      border-radius: 14px;
+      overflow: hidden;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(22, 40, 80, 0.06);
+      transition: transform 0.18s, box-shadow 0.18s;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .news-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 26px rgba(22, 40, 80, 0.1);
+    }
+
+    .cover-wrap {
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: linear-gradient(135deg, #f2f5fb, #e9effc);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #8a98b5;
+      font-size: 13px;
+      overflow: hidden;
+    }
+
+    .cover-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .news-card-body {
+      padding: 14px 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      height: 100%;
+    }
+
+    .news-title {
+      margin: 0;
+      font-size: 19px;
+      font-weight: 700;
+      color: #1f2a3d;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+
+    .news-summary {
+      margin: 0;
+      color: #56617a;
+      line-height: 1.65;
+      font-size: 14px;
+      flex: 1;
+    }
+
+    .news-meta {
+      font-size: 12px;
+      color: #8490a8;
+      line-height: 1.5;
+      border-top: 1px solid #edf1fa;
+      padding-top: 10px;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .mini-btn {
+      border: 1px solid #d9e2f5;
+      background: #f7faff;
+      color: #3357a4;
+      border-radius: 8px;
+      font-size: 12px;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+
+    .mini-btn.danger {
+      color: #b33939;
+      background: #fff3f3;
+      border-color: #f3d4d4;
+    }
+
+    .empty-state,
+    .loading {
+      text-align: center;
+      padding: 42px;
+      border: 1px dashed #dbe3f5;
+      border-radius: 12px;
+      color: #8592ac;
+      background: #fbfcff;
+    }
+
+    .news-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(14, 20, 32, 0.52);
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .news-modal.is-open {
+      display: flex;
+    }
+
+    .news-modal-content {
+      width: min(920px, 100%);
+      max-height: 90vh;
+      overflow: auto;
+      background: #fff;
+      border-radius: 14px;
+      border: 1px solid #e4eaf8;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.22);
+      padding: 18px;
+      box-sizing: border-box;
+    }
+
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .modal-title {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.35;
+      color: #1e2b40;
+    }
+
+    .modal-close {
+      border: 1px solid #d9e2f5;
+      background: #f7faff;
+      color: #425d90;
+      border-radius: 8px;
+      height: 34px;
+      padding: 0 12px;
+      cursor: pointer;
+    }
+
+    .modal-cover {
+      width: 100%;
+      border-radius: 10px;
+      margin: 12px 0;
+      max-height: 380px;
+      object-fit: cover;
+      display: none;
+    }
+
+    .modal-meta {
+      color: #7f8ca5;
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+
+    .modal-summary {
+      background: #f7faff;
+      border: 1px solid #e1e9f8;
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: #495977;
+      margin-bottom: 14px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .modal-body {
+      color: #25314a;
+      line-height: 1.8;
+      word-break: break-word;
+    }
+
+    .modal-body img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+    }
+
+    @media (max-width: 900px) {
       .news-top-title {
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
-        margin: 0;
-        font-size: 32px;
-        font-weight: 700;
-        color: #1d2538;
-        pointer-events: none;
+        font-size: 24px;
       }
 
-      .back-button {
-        padding: 10px 20px;
-        background: #f5f5f5;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        font-size: 14px;
-        color: #666;
-        transition: all 0.2s;
-      }
-
-      .back-button:hover {
-        background: #e0e0e0;
-      }
-
-      .tools-row {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 16px;
-      }
-
-      .search-bar {
-        flex: 1;
-      }
-
-      .search-input {
-        width: 100%;
-        padding: 12px 20px;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        font-size: 14px;
-        box-sizing: border-box;
-      }
-
-      .publish-panel {
-        display: none;
-        background: #fff;
-        border: 1px solid #eee;
-        border-radius: 12px;
-        padding: 16px;
-        margin-bottom: 16px;
-      }
-
-      .publish-form {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-      }
-
-      .publish-title,
-      .publish-content {
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        padding: 10px 12px;
-        font-size: 14px;
-        font-family: inherit;
-      }
-
-      .publish-content {
-        min-height: 110px;
-        resize: vertical;
-      }
-
-      .publish-actions {
-        display: flex;
-        gap: 8px;
-        justify-content: flex-end;
+      .publish-grid {
+        grid-template-columns: 1fr;
       }
 
       .news-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-        gap: 16px;
+        grid-template-columns: 1fr;
       }
 
-      .news-card {
-        background: white;
-        border: 1px solid #eee;
-        border-radius: 12px;
-        padding: 18px;
-        transition: all 0.2s;
+      .modal-title {
+        font-size: 22px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .news-container {
+        padding: 92px 14px 14px;
       }
 
-      .news-card:hover {
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        transform: translateY(-1px);
+      .tools-row {
+        flex-direction: column;
+        align-items: stretch;
       }
 
-      .news-title {
-        margin: 0 0 8px;
+      .news-top-title {
         font-size: 20px;
-        font-weight: 600;
-        color: #1a1a1a;
-        line-height: 1.35;
       }
 
-      .news-meta {
-        font-size: 12px;
-        color: #888;
-        margin-bottom: 12px;
-        line-height: 1.5;
+      .header-title {
+        display: none;
       }
-
-      .news-content {
-        color: #444;
-        line-height: 1.75;
-        font-size: 14px;
-        white-space: pre-wrap;
-        word-break: break-word;
-      }
-
-      .empty-state {
-        text-align: center;
-        padding: 40px;
-        color: #999;
-        border: 1px dashed #ddd;
-        border-radius: 12px;
-        background: #fafafa;
-      }
-
-      .empty-state-icon {
-        font-size: 42px;
-        margin-bottom: 10px;
-      }
-
-      .loading {
-        text-align: center;
-        padding: 40px;
-        color: #888;
-      }
-
-      @media (max-width: 768px) {
-        .news-container {
-          padding: 92px 14px 14px;
-        }
-
-        .page-header {
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 10px;
-        }
-
-        .tools-row {
-          flex-direction: column;
-          align-items: stretch;
-        }
-
-        .news-grid {
-          grid-template-columns: 1fr;
-        }
-
-        .news-top-title {
-          font-size: 22px;
-        }
-      }
-    </style>
+    }
+  </style>
 </head>
 <body class="dashboard-body news-page">
-    <div class="header-bar">
-      <div class="news-top-left">
-        <button class="top-back-button" onclick="goBack()">← 返回主页</button>
-        <div class="logo">A</div>
-        <h1 class="header-title">华南师范大学阿伯丁 数据科学与人工智能学院</h1>
-      </div>
-      <h1 class="news-top-title">留学信息发布</h1>
-      <div class="header-actions">
-        <div class="user-info">
-          <div class="user-avatar" id="user-avatar">U</div>
-          <span id="username">用户</span>
-        </div>
+  <div class="header-bar">
+    <div class="news-top-left">
+      <button class="top-back-button" onclick="goBack()">← 返回主页</button>
+      <div class="logo">A</div>
+      <h1 class="header-title">阿伯丁留学服务平台</h1>
+    </div>
+    <h1 class="news-top-title">留学信息发布</h1>
+    <div class="header-actions">
+      <div class="user-info">
+        <div class="user-avatar" id="user-avatar">U</div>
+        <span id="username">用户</span>
       </div>
     </div>
+  </div>
 
-    <div class="news-container">
-      <div class="tools-row">
-        <div class="search-bar">
-          <input type="text" class="search-input" id="search-input" placeholder="搜索标题、内容、发布人..." />
-        </div>
-        <button id="open-publish" class="button" style="display:none;" onclick="togglePublish(true)">✍️ 发布信息</button>
+  <div class="news-container">
+    <div class="tools-row">
+      <div class="search-bar">
+        <input id="search-input" class="search-input" type="text" placeholder="搜索标题、摘要、发布人" />
       </div>
+      <button id="open-publish" class="button" style="display:none;" onclick="togglePublish(true)">发布文章</button>
+    </div>
 
-      <div id="publish-panel" class="publish-panel">
+    <div id="news-list" class="loading">加载中...</div>
+  </div>
+
+  <div id="publish-modal" class="app-modal-overlay" onclick="handlePublishModalBackdrop(event)">
+    <div class="app-modal-box app-modal-box--news" role="dialog" aria-modal="true" aria-labelledby="publish-modal-title">
+      <div class="app-modal-header">
+        <h3 id="publish-modal-title">发布文章</h3>
+        <button class="app-modal-close" type="button" onclick="closePublishModal()">&times;</button>
+      </div>
+      <div class="app-modal-body publish-modal-body">
         <div class="publish-form">
-          <input id="news-title" class="publish-title" type="text" placeholder="标题（必填）" />
-          <textarea id="news-content" class="publish-content" placeholder="内容（必填）"></textarea>
+          <input id="news-title" class="publish-input" type="text" placeholder="文章标题（必填）" />
+          <div class="publish-grid">
+            <input id="news-cover" class="publish-input" type="text" placeholder="封面图 URL（可选，不填将自动提取第一张图）" />
+            <textarea id="news-summary" class="publish-textarea" placeholder="文章摘要（可选，不填自动生成）"></textarea>
+          </div>
+
+          <div id="editor-wrapper">
+            <div id="editor-toolbar">
+              <span class="ql-formats">
+                <select class="ql-header">
+                  <option selected></option>
+                  <option value="1"></option>
+                  <option value="2"></option>
+                  <option value="3"></option>
+                </select>
+                <select class="ql-font"></select>
+              </span>
+              <span class="ql-formats">
+                <button class="ql-bold"></button>
+                <button class="ql-italic"></button>
+                <button class="ql-underline"></button>
+                <button class="ql-strike"></button>
+              </span>
+              <span class="ql-formats">
+                <button class="ql-list" value="ordered"></button>
+                <button class="ql-list" value="bullet"></button>
+                <button class="ql-blockquote"></button>
+                <button class="ql-code-block"></button>
+              </span>
+              <span class="ql-formats">
+                <button class="ql-link"></button>
+                <button class="ql-image"></button>
+                <button class="ql-clean"></button>
+              </span>
+            </div>
+            <div id="editor"></div>
+            <div class="drag-drop-overlay" aria-hidden="true">
+              <div class="overlay-icon">📎</div>
+              <div>拖拽文件至此 (Drop files here)</div>
+            </div>
+          </div>
+
           <div class="publish-actions">
-            <button class="button" onclick="togglePublish(false)">取消</button>
-            <button class="button" onclick="publishNews()">发布</button>
+            <button class="button" type="button" onclick="resetPublishForm()">清空</button>
+            <button class="button" type="button" onclick="closePublishModal()">取消</button>
+            <button id="submit-news" class="button" type="button" onclick="submitNews()">发布</button>
           </div>
         </div>
       </div>
-
-      <div id="news-list" class="loading">加载中...</div>
     </div>
+  </div>
 
-    <script src="./js/api.js"></script>
-    <script src="./js/auth.js"></script>
-    <script>
-      let allNews = [];
+  <div id="news-modal" class="news-modal" onclick="closeModalByBackdrop(event)">
+    <div class="news-modal-content">
+      <div class="modal-head">
+        <h2 id="modal-title" class="modal-title"></h2>
+        <button class="modal-close" onclick="closeNewsModal()">关闭</button>
+      </div>
+      <img id="modal-cover" class="modal-cover" alt="cover" />
+      <div id="modal-meta" class="modal-meta"></div>
+      <div id="modal-summary" class="modal-summary"></div>
+      <article id="modal-body" class="modal-body"></article>
+    </div>
+  </div>
 
-      document.addEventListener('DOMContentLoaded', async function() {
-        try {
-          await Auth.checkAuth();
-        } catch (err) {
-          alert('请先登录');
-          location.href = 'index.html';
-          return;
+  <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+  <script src="./js/api.js"></script>
+  <script src="./js/auth.js"></script>
+  <script>
+    let allNews = [];
+    let editor = null;
+    let isTeacher = false;
+    let editingNewsId = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        await Auth.checkAuth();
+      } catch (err) {
+        alert('请先登录');
+        location.href = 'index.html';
+        return;
+      }
+
+      updateHeaderUser();
+      isTeacher = Auth.state.role === 'teacher' || (Auth.state.userInfo && Auth.state.userInfo.role === 'teacher');
+      if (isTeacher) {
+        document.getElementById('open-publish').style.display = 'inline-flex';
+        initEditor();
+      }
+
+      document.getElementById('search-input').addEventListener('input', handleSearch);
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          closePublishModal();
+          closeNewsModal();
         }
-
-        updateHeaderUser();
-
-        const isTeacher = Auth.state.role === 'teacher' || (Auth.state.userInfo && Auth.state.userInfo.role === 'teacher');
-        if (isTeacher) {
-          document.getElementById('open-publish').style.display = 'inline-flex';
-        }
-
-        const searchInput = document.getElementById('search-input');
-        searchInput.addEventListener('input', handleSearch);
-
-        await loadNews();
       });
 
-      function goBack() {
-        location.href = 'dashboard.html';
-      }
+      await loadNews();
+    });
 
-      function updateHeaderUser() {
-        const user = Auth.state.user || Auth.state.userInfo || {};
-        const name = user.name || user.email || (Auth.state.role === 'teacher' ? '教师' : '用户');
-        const username = document.getElementById('username');
-        const avatar = document.getElementById('user-avatar');
-        if (username) username.textContent = name;
-        if (avatar) avatar.textContent = name.charAt(0).toUpperCase();
-      }
+    function goBack() {
+      location.href = 'dashboard.html';
+    }
 
-      function togglePublish(show) {
-        document.getElementById('publish-panel').style.display = show ? 'block' : 'none';
-      }
+    function updateHeaderUser() {
+      const user = Auth.state.user || Auth.state.userInfo || {};
+      const name = user.name || user.email || (Auth.state.role === 'teacher' ? '教师' : '用户');
+      const username = document.getElementById('username');
+      const avatar = document.getElementById('user-avatar');
+      if (username) username.textContent = name;
+      if (avatar) avatar.textContent = name.charAt(0).toUpperCase();
+    }
 
-      async function loadNews() {
-        const list = document.getElementById('news-list');
-        list.className = 'loading';
-        list.innerHTML = '加载中...';
+    function initEditor() {
+      editor = new Quill('#editor', {
+        theme: 'snow',
+        modules: {
+          toolbar: {
+            container: '#editor-toolbar',
+            handlers: {
+              image: onToolbarImage,
+            },
+          },
+        },
+      });
 
+      const root = editor.root;
+      const editorContainer = editor.container;
+      const editorWrapper = document.getElementById('editor-wrapper');
+      let dragCounter = 0;
+      const dropOptions = { capture: true };
+
+      const hasFilePayload = (event) => {
+        const dt = event?.dataTransfer;
+        if (!dt) return false;
+        const types = Array.from(dt.types || []);
+        return types.includes('Files') || types.includes('application/x-moz-file');
+      };
+
+      const setDragging = (active) => {
+        if (!editorWrapper) return;
+        editorWrapper.classList.toggle('is-dragging', active);
+      };
+
+      const onDragEnter = (event) => {
+        if (!hasFilePayload(event)) return;
+        event.preventDefault();
+        event.stopPropagation();
+        dragCounter += 1;
+        setDragging(true);
+      };
+
+      const onDragOver = (event) => {
+        if (!hasFilePayload(event)) return;
+        event.preventDefault();
+        event.stopPropagation();
+        setDragging(true);
+      };
+
+      const onDragLeave = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        dragCounter = Math.max(0, dragCounter - 1);
+        const nextTarget = event.relatedTarget;
+        if (dragCounter === 0 && (!nextTarget || (editorWrapper && !editorWrapper.contains(nextTarget)))) {
+          setDragging(false);
+        }
+      };
+
+      const onDrop = async (event) => {
+        if (event._newsDropHandled) return;
+        event._newsDropHandled = true;
+        event.preventDefault();
+        event.stopPropagation();
+        dragCounter = 0;
+        setDragging(false);
+
+        console.log("=== 触发拖拽事件 ===");
         try {
-          const items = await API.get('/api/news');
-          allNews = Array.isArray(items) ? items : [];
-          renderNews(allNews);
+          console.log("dataTransfer.types:", event.dataTransfer.types);
+          console.log("dataTransfer.files:", event.dataTransfer.files.length);
+          console.log("dataTransfer.items:", event.dataTransfer.items.length);
         } catch (err) {
-          list.className = '';
-          list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">⚠️</div><div>加载失败：${escapeHTML(err.message || '请稍后重试')}</div></div>`;
-        }
-      }
-
-      function handleSearch(e) {
-        const keyword = (e.target.value || '').toLowerCase().trim();
-        if (!keyword) {
-          renderNews(allNews);
-          return;
-        }
-
-        const filtered = allNews.filter((item) => {
-          const title = (item.title || '').toLowerCase();
-          const content = (item.content || '').toLowerCase();
-          const author = (item.author_name || '').toLowerCase();
-          return title.includes(keyword) || content.includes(keyword) || author.includes(keyword);
-        });
-
-        renderNews(filtered);
-      }
-
-      function renderNews(items) {
-        const list = document.getElementById('news-list');
-
-        if (!items || items.length === 0) {
-          list.className = '';
-          list.innerHTML = `
-            <div class="empty-state">
-              <div class="empty-state-icon">📰</div>
-              <div>暂无符合条件的留学信息</div>
-            </div>
-          `;
-          return;
-        }
-
-        list.className = 'news-grid';
-        list.innerHTML = items.map((n) => `
-          <article class="news-card">
-            <h3 class="news-title">${escapeHTML(n.title)}</h3>
-            <div class="news-meta">
-              ${n.author_name ? `<span>发布人：${escapeHTML(n.author_name)}</span> · ` : ''}
-              <span>发布于 ${formatDate(n.created_at)}</span>
-              ${n.updated_at && n.updated_at !== n.created_at ? ` · <span>更新于 ${formatDate(n.updated_at)}</span>` : ''}
-            </div>
-            <div class="news-content">${escapeHTML(n.content)}</div>
-          </article>
-        `).join('');
-      }
-
-      async function publishNews() {
-        const titleEl = document.getElementById('news-title');
-        const contentEl = document.getElementById('news-content');
-        const title = titleEl.value.trim();
-        const content = contentEl.value.trim();
-
-        if (!title || !content) {
-          alert('请填写标题和内容');
-          return;
+          console.warn("[drop] dataTransfer read failed:", err);
         }
 
         try {
-          await API.post('/api/news', { title, content }, {
-            headers: { Authorization: `Bearer ${Auth.state.access}` },
-          });
-          titleEl.value = '';
-          contentEl.value = '';
-          togglePublish(false);
-          await loadNews();
-          const searchInput = document.getElementById('search-input');
-          if (searchInput && searchInput.value.trim()) {
-            handleSearch({ target: searchInput });
+          const payload = await extractDroppedImagePayload(event.dataTransfer);
+          console.log("[drop] extracted payload:", payload);
+          if (!payload) {
+            alert('未检测到可用图片，请拖拽本地图片、聊天窗口图片，或使用工具栏上传。');
+            return;
           }
-          alert('发布成功');
+          await handleDroppedImagePayload(payload);
         } catch (err) {
-          alert('发布失败：' + (err.error || err.message || '请稍后重试'));
+          console.error('[drop] handle failed:', err);
+          alert('拖拽处理失败：' + (err.message || '未知错误'));
         }
+      };
+
+      if (editorWrapper) {
+        editorWrapper.addEventListener('dragenter', onDragEnter, dropOptions);
+        editorWrapper.addEventListener('dragover', onDragOver, dropOptions);
+        editorWrapper.addEventListener('dragleave', onDragLeave, dropOptions);
+        editorWrapper.addEventListener('drop', onDrop, dropOptions);
       }
 
-      function formatDate(iso) {
+      root.addEventListener('dragover', onDragOver, dropOptions);
+      root.addEventListener('drop', onDrop, dropOptions);
+      if (editorContainer && editorContainer !== root && editorContainer !== editorWrapper) {
+        editorContainer.addEventListener('dragover', onDragOver, dropOptions);
+        editorContainer.addEventListener('drop', onDrop, dropOptions);
+      }
+
+      console.log('[initEditor] drop listeners bound with capture=true');
+
+      root.addEventListener('paste', (event) => {
+        const items = Array.from(event.clipboardData?.items || []);
+        const imageItem = items.find((item) => item.type && item.type.startsWith('image/'));
+        if (!imageItem) return;
+        event.preventDefault();
+        const imageFile = imageItem.getAsFile();
+        if (imageFile) {
+          insertUploadedImage(imageFile);
+        }
+      });
+    }
+
+    function onToolbarImage() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.click();
+      input.onchange = () => {
+        const file = input.files && input.files[0];
+        if (file) {
+          insertUploadedImage(file);
+        }
+      };
+    }
+
+    async function insertUploadedImage(file) {
+      if (!isTeacher) return;
+      if (!isImageFile(file)) {
+        alert('只能上传图片文件');
+        return;
+      }
+
+      try {
+        const uploadedUrl = await uploadEditorImage(file);
+        const range = editor.getSelection(true);
+        const index = range ? range.index : editor.getLength();
+        editor.insertEmbed(index, 'image', uploadedUrl, 'user');
+        editor.setSelection(index + 1);
+      } catch (err) {
+        alert('图片上传失败：' + (err.message || '未知错误'));
+      }
+    }
+
+    async function uploadEditorImage(file, retried = false) {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch(`${API.baseURL}/api/news/upload_image`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${Auth.state.access}`,
+        },
+        body: formData,
+      });
+
+      let data = null;
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
+
+      if (response.status === 401 && !retried && Auth.state.refresh) {
+        await Auth.refresh();
+        return uploadEditorImage(file, true);
+      }
+
+      if (!response.ok) {
+        throw new Error((data && (data.error || data.message)) || '上传失败');
+      }
+
+      if (!data || !data.url) {
+        throw new Error('上传接口未返回图片地址');
+      }
+
+      return toAbsoluteUrl(data.url);
+    }
+
+    function isImageFile(file) {
+      if (!file) return false;
+      if (file.type && file.type.startsWith('image/')) return true;
+      const name = (file.name || '').toLowerCase();
+      return /\.(png|jpe?g|gif|webp|bmp)$/i.test(name);
+    }
+
+    async function handleDroppedImagePayload(payload) {
+      try {
+        if (!payload) {
+          console.warn('[handle] empty payload');
+          return;
+        }
+
+        console.log('[handle] payload kind:', payload.kind);
+        if (payload.kind === 'file' && payload.file) {
+          console.log('[handle] uploading file:', payload.file.name, payload.file.type);
+          await insertUploadedImage(payload.file);
+          return;
+        }
+
+        if (payload.kind === 'ref' && payload.ref) {
+          console.log('[handle] ref payload:', payload.ref);
+          if (isLocalPathRef(payload.ref)) {
+            alert('检测到本地路径文本，但浏览器无法直接读取该路径。请从文件管理器直接拖文件，或先复制为图片再粘贴。');
+            return;
+          }
+
+          try {
+            const fileFromRef = await buildImageFileFromRef(payload.ref);
+            console.log('[handle] ref converted file:', fileFromRef.name, fileFromRef.type);
+            await insertUploadedImage(fileFromRef);
+            return;
+          } catch (err) {
+            console.warn('[handle] convert ref to file failed:', err);
+            if (isLikelyImageRef(payload.ref)) {
+              insertImageEmbed(payload.ref);
+              alert('已插入图片引用地址。若外链无法访问，请改用本地文件拖拽上传。');
+              return;
+            }
+            alert('拖拽图片解析失败：' + (err.message || '未知错误'));
+          }
+        }
+      } catch (err) {
+        console.error('[handle] failed:', err);
+        alert('拖拽处理异常：' + (err.message || '未知错误'));
+      }
+    }
+
+    async function extractDroppedImagePayload(dataTransfer) {
+      try {
+        if (!dataTransfer) {
+          console.warn('[extract] missing dataTransfer');
+          return null;
+        }
+
+        const directFiles = Array.from(dataTransfer.files || []);
+        console.log('[extract] directFiles count:', directFiles.length);
+        const directMatch = directFiles.find((f) => isImageFile(f));
+        if (directMatch) {
+          console.log('[extract] matched direct file:', directMatch.name, directMatch.type);
+          return { kind: 'file', file: directMatch };
+        }
+
+        const items = Array.from(dataTransfer.items || []);
+        console.log('[extract] items count:', items.length);
+        for (const item of items) {
+          if (item.kind !== 'file') continue;
+          const candidate = item.getAsFile();
+          console.log('[extract] item file candidate:', candidate?.name, candidate?.type);
+          if (candidate && isImageFile(candidate)) {
+            console.log('[extract] matched item file:', candidate.name, candidate.type);
+            return { kind: 'file', file: candidate };
+          }
+        }
+
+        const htmlItem = items.find((item) => item.kind === 'string' && item.type === 'text/html');
+        if (htmlItem) {
+          const html = await getDataTransferItemString(htmlItem);
+          console.log('[extract] html length:', html.length);
+          const src = extractImageSrcFromHtml(html);
+          console.log('[extract] html src:', src);
+          if (src) {
+            return { kind: 'ref', ref: src };
+          }
+        }
+
+        const uriItem = items.find((item) => item.kind === 'string' && item.type === 'text/uri-list');
+        if (uriItem) {
+          const uriText = await getDataTransferItemString(uriItem);
+          console.log('[extract] uri text:', uriText);
+          const ref = extractImageRefFromText(uriText);
+          console.log('[extract] uri ref:', ref);
+          if (ref) {
+            return { kind: 'ref', ref };
+          }
+        }
+
+        const textItem = items.find((item) => item.kind === 'string' && item.type === 'text/plain');
+        if (textItem) {
+          const plainText = await getDataTransferItemString(textItem);
+          console.log('[extract] plain text:', plainText);
+          const ref = extractImageRefFromText(plainText);
+          console.log('[extract] plain ref:', ref);
+          if (ref) {
+            return { kind: 'ref', ref };
+          }
+        }
+
+        const plainFallback = (dataTransfer.getData && dataTransfer.getData('text/plain')) || '';
+        console.log('[extract] plain fallback:', plainFallback);
+        const fallbackRef = extractImageRefFromText(plainFallback);
+        console.log('[extract] fallback ref:', fallbackRef);
+        if (fallbackRef) {
+          return { kind: 'ref', ref: fallbackRef };
+        }
+
+        console.warn('[extract] no usable payload');
+        return null;
+      } catch (err) {
+        console.error('[extract] failed:', err);
+        return null;
+      }
+    }
+
+    function getDataTransferItemString(item) {
+      return new Promise((resolve) => {
         try {
-          return new Date(iso).toLocaleString('zh-CN');
+          item.getAsString((value) => resolve((value || '').trim()));
         } catch {
-          return iso || '';
+          resolve('');
+        }
+      });
+    }
+
+    function extractImageSrcFromHtml(htmlText) {
+      const html = (htmlText || '').trim();
+      if (!html) return '';
+      const match = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+      return match && match[1] ? match[1].trim() : '';
+    }
+
+    function extractImageRefFromText(text) {
+      const raw = (text || '').trim();
+      if (!raw) return '';
+
+      const lines = raw
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter((line) => line && !line.startsWith('#'));
+
+      for (const line of lines) {
+        if (isLikelyImageRef(line) || isLocalPathRef(line)) {
+          return line;
         }
       }
+      return '';
+    }
 
-      function escapeHTML(str) {
-        return (str || '')
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&#39;');
+    function isLikelyImageRef(ref) {
+      const value = (ref || '').trim();
+      if (!value) return false;
+      if (/^data:image\//i.test(value)) return true;
+      if (/\.(png|jpe?g|gif|webp|bmp)(\?.*)?$/i.test(value)) return true;
+      if (/^https?:\/\/.+/i.test(value)) return true;
+      if (/^blob:.+/i.test(value)) return true;
+      if (/^file:\/\/.+/i.test(value)) return true;
+      return false;
+    }
+
+    function isLocalPathRef(ref) {
+      const value = (ref || '').trim();
+      if (!value) return false;
+      if (/^[a-zA-Z]:\\/.test(value) && /\.(png|jpe?g|gif|webp|bmp)$/i.test(value)) return true;
+      if (/^\\\\.+\\.+\.(png|jpe?g|gif|webp|bmp)$/i.test(value)) return true;
+      return false;
+    }
+
+    async function buildImageFileFromRef(ref) {
+      const response = await fetch(ref);
+      if (!response.ok) {
+        throw new Error(`无法读取拖拽引用(${response.status})`);
       }
-    </script>
+      const blob = await response.blob();
+      const mime = blob.type || guessMimeByRef(ref) || 'application/octet-stream';
+      if (!mime.startsWith('image/')) {
+        throw new Error('拖拽内容不是图片类型');
+      }
+      const fileName = buildFileNameFromRef(ref, mime);
+      return new File([blob], fileName, { type: mime });
+    }
+
+    function guessMimeByRef(ref) {
+      const lower = (ref || '').toLowerCase();
+      if (lower.includes('.png')) return 'image/png';
+      if (lower.includes('.jpg') || lower.includes('.jpeg')) return 'image/jpeg';
+      if (lower.includes('.gif')) return 'image/gif';
+      if (lower.includes('.webp')) return 'image/webp';
+      if (lower.includes('.bmp')) return 'image/bmp';
+      return '';
+    }
+
+    function buildFileNameFromRef(ref, mime) {
+      const extByMime = {
+        'image/png': 'png',
+        'image/jpeg': 'jpg',
+        'image/gif': 'gif',
+        'image/webp': 'webp',
+        'image/bmp': 'bmp',
+      };
+      const refName = (ref || '').split('/').pop() || '';
+      const cleaned = refName.split('?')[0].trim();
+      if (cleaned && /\.[a-z0-9]+$/i.test(cleaned)) {
+        return cleaned;
+      }
+      const ext = extByMime[mime] || 'png';
+      return `dragged-image-${Date.now()}.${ext}`;
+    }
+
+    function insertImageEmbed(url) {
+      const range = editor.getSelection(true);
+      const index = range ? range.index : editor.getLength();
+      editor.insertEmbed(index, 'image', url, 'user');
+      editor.setSelection(index + 1);
+    }
+
+    function togglePublish(show) {
+      const modal = document.getElementById('publish-modal');
+      if (!modal) return;
+      if (show) {
+        modal.classList.add('is-open');
+        if (editor) {
+          setTimeout(() => editor.focus(), 0);
+        }
+        return;
+      }
+      closePublishModal();
+    }
+
+    function handlePublishModalBackdrop(event) {
+      if (event.target && event.target.id === 'publish-modal') {
+        closePublishModal();
+      }
+    }
+
+    function closePublishModal() {
+      const modal = document.getElementById('publish-modal');
+      if (!modal || !modal.classList.contains('is-open')) return;
+      modal.classList.remove('is-open');
+      resetPublishForm();
+    }
+
+    function resetPublishForm() {
+      editingNewsId = null;
+      document.getElementById('submit-news').textContent = '发布';
+      document.getElementById('news-title').value = '';
+      document.getElementById('news-cover').value = '';
+      document.getElementById('news-summary').value = '';
+      if (editor) {
+        editor.setContents([]);
+      }
+    }
+
+    async function loadNews() {
+      const list = document.getElementById('news-list');
+      list.className = 'loading';
+      list.textContent = '加载中...';
+
+      try {
+        const items = await API.get('/api/news');
+        allNews = Array.isArray(items) ? items : [];
+        renderNews(allNews);
+      } catch (err) {
+        list.className = '';
+        list.innerHTML = `<div class="empty-state">加载失败：${escapeHTML(err.message || '请稍后重试')}</div>`;
+      }
+    }
+
+    function handleSearch(event) {
+      const keyword = (event.target.value || '').trim().toLowerCase();
+      if (!keyword) {
+        renderNews(allNews);
+        return;
+      }
+
+      const filtered = allNews.filter((item) => {
+        const title = (item.title || '').toLowerCase();
+        const summary = (item.summary || '').toLowerCase();
+        const author = (item.author_name || '').toLowerCase();
+        return title.includes(keyword) || summary.includes(keyword) || author.includes(keyword);
+      });
+
+      renderNews(filtered);
+    }
+
+    function renderNews(items) {
+      const list = document.getElementById('news-list');
+
+      if (!Array.isArray(items) || items.length === 0) {
+        list.className = '';
+        list.innerHTML = '<div class="empty-state">暂无符合条件的留学资讯</div>';
+        return;
+      }
+
+      list.className = 'news-grid';
+      list.innerHTML = items.map((item) => {
+        const cover = item.cover_image ? `<img src="${escapeAttr(toAbsoluteUrl(item.cover_image))}" alt="cover" loading="lazy" />` : '暂无封面';
+        const actionButtons = isTeacher
+          ? `<div class="card-actions">
+              <button class="mini-btn" onclick="event.stopPropagation();startEdit(${item.id})">编辑</button>
+              <button class="mini-btn danger" onclick="event.stopPropagation();deleteNews(${item.id})">删除</button>
+            </div>`
+          : '';
+
+        return `
+          <article class="news-card" onclick="openNewsDetail(${item.id})">
+            <div class="cover-wrap">${cover}</div>
+            <div class="news-card-body">
+              <h3 class="news-title">${escapeHTML(item.title || '')}</h3>
+              <p class="news-summary">${escapeHTML(item.summary || '暂无摘要')}</p>
+              <div class="news-meta">
+                ${item.author_name ? `<span>发布人：${escapeHTML(item.author_name)}</span> · ` : ''}
+                <span>发布时间：${formatDate(item.created_at)}</span>
+              </div>
+              ${actionButtons}
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    async function submitNews() {
+      if (!isTeacher) return;
+
+      const title = document.getElementById('news-title').value.trim();
+      const summary = document.getElementById('news-summary').value.trim();
+      const coverImage = document.getElementById('news-cover').value.trim();
+      const plainText = editor ? editor.getText().trim() : '';
+      const content = editor ? editor.root.innerHTML.trim() : '';
+
+      if (!title) {
+        alert('请填写文章标题');
+        return;
+      }
+      if (!plainText) {
+        alert('请填写文章内容');
+        return;
+      }
+
+      const payload = {
+        title,
+        summary,
+        cover_image: coverImage,
+        content,
+      };
+
+      const headers = {
+        Authorization: `Bearer ${Auth.state.access}`,
+      };
+
+      try {
+        if (editingNewsId) {
+          await API.put(`/api/news/${editingNewsId}`, payload, { headers });
+        } else {
+          await API.post('/api/news', payload, { headers });
+        }
+
+        closePublishModal();
+        await loadNews();
+        const searchInput = document.getElementById('search-input');
+        if (searchInput.value.trim()) {
+          handleSearch({ target: searchInput });
+        }
+      } catch (err) {
+        alert('提交失败：' + (err.error || err.message || '请稍后重试'));
+      }
+    }
+
+    async function startEdit(newsId) {
+      if (!isTeacher) return;
+      try {
+        const detail = await API.get(`/api/news/${newsId}`);
+        editingNewsId = newsId;
+        document.getElementById('submit-news').textContent = '更新';
+        document.getElementById('news-title').value = detail.title || '';
+        document.getElementById('news-summary').value = detail.summary || '';
+        document.getElementById('news-cover').value = detail.cover_image || '';
+        togglePublish(true);
+        if (editor) {
+          editor.root.innerHTML = detail.content || '';
+        }
+      } catch (err) {
+        alert('加载文章失败：' + (err.message || '未知错误'));
+      }
+    }
+
+    async function deleteNews(newsId) {
+      if (!isTeacher) return;
+      const ok = confirm('确认删除这篇文章吗？');
+      if (!ok) return;
+
+      try {
+        await API.delete(`/api/news/${newsId}`, {
+          headers: {
+            Authorization: `Bearer ${Auth.state.access}`,
+          },
+        });
+        await loadNews();
+      } catch (err) {
+        alert('删除失败：' + (err.message || '未知错误'));
+      }
+    }
+
+    async function openNewsDetail(newsId) {
+      try {
+        const detail = await API.get(`/api/news/${newsId}`);
+        const modal = document.getElementById('news-modal');
+        const title = document.getElementById('modal-title');
+        const cover = document.getElementById('modal-cover');
+        const meta = document.getElementById('modal-meta');
+        const summary = document.getElementById('modal-summary');
+        const body = document.getElementById('modal-body');
+
+        title.textContent = detail.title || '';
+        meta.textContent = `发布人：${detail.author_name || '未知'} · ${formatDate(detail.created_at)}`;
+        summary.textContent = detail.summary || '暂无摘要';
+
+        if (detail.cover_image) {
+          cover.src = toAbsoluteUrl(detail.cover_image);
+          cover.style.display = 'block';
+        } else {
+          cover.style.display = 'none';
+        }
+
+        const safeHtml = sanitizeHtml(detail.content || '');
+        body.innerHTML = safeHtml;
+
+        modal.classList.add('is-open');
+      } catch (err) {
+        alert('加载文章详情失败：' + (err.message || '未知错误'));
+      }
+    }
+
+    function closeNewsModal() {
+      document.getElementById('news-modal').classList.remove('is-open');
+    }
+
+    function closeModalByBackdrop(event) {
+      if (event.target.id === 'news-modal') {
+        closeNewsModal();
+      }
+    }
+
+    function sanitizeHtml(html) {
+      if (window.DOMPurify) {
+        return DOMPurify.sanitize(html, {
+          USE_PROFILES: { html: true },
+        });
+      }
+      return escapeHTML(html).replace(/\n/g, '<br>');
+    }
+
+    function toAbsoluteUrl(url) {
+      if (!url) return '';
+      if (/^https?:\/\//i.test(url) || url.startsWith('data:')) return url;
+      if (url.startsWith('/')) return `${API.baseURL}${url}`;
+      return `${API.baseURL}/${url}`;
+    }
+
+    function formatDate(iso) {
+      if (!iso) return '';
+      try {
+        return new Date(iso).toLocaleString('zh-CN');
+      } catch {
+        return iso;
+      }
+    }
+
+    function escapeHTML(str) {
+      return (str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function escapeAttr(str) {
+      return escapeHTML(str).replace(/`/g, '&#96;');
+    }
+  </script>
 </body>
 </html>
