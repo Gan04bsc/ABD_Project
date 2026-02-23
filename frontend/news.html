@@ -3,137 +3,421 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>留学信息发布 - Study Abroad</title>
+    <title>留学信息发布 - 阿伯丁留学服务平台</title>
     <link rel="stylesheet" href="./styles/styles.css" />
+    <style>
+      .news-container {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 96px 24px 24px;
+        box-sizing: border-box;
+      }
+
+      .news-page {
+        background: #ffffff !important;
+        min-height: 100vh;
+      }
+
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+      }
+
+      .page-title {
+        font-size: 28px;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin: 0;
+      }
+
+      .toolbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .news-top-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+      }
+
+      .top-back-button {
+        padding: 8px 14px;
+        background: #f1f4fb;
+        border: 1px solid #dbe3f5;
+        border-radius: 18px;
+        cursor: pointer;
+        font-size: 13px;
+        color: #4b5f86;
+        transition: all 0.2s;
+        white-space: nowrap;
+      }
+
+      .top-back-button:hover {
+        background: #e7eefc;
+      }
+
+      .news-top-title {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        margin: 0;
+        font-size: 32px;
+        font-weight: 700;
+        color: #1d2538;
+        pointer-events: none;
+      }
+
+      .back-button {
+        padding: 10px 20px;
+        background: #f5f5f5;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        color: #666;
+        transition: all 0.2s;
+      }
+
+      .back-button:hover {
+        background: #e0e0e0;
+      }
+
+      .tools-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+
+      .search-bar {
+        flex: 1;
+      }
+
+      .search-input {
+        width: 100%;
+        padding: 12px 20px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 14px;
+        box-sizing: border-box;
+      }
+
+      .publish-panel {
+        display: none;
+        background: #fff;
+        border: 1px solid #eee;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 16px;
+      }
+
+      .publish-form {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .publish-title,
+      .publish-content {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 10px 12px;
+        font-size: 14px;
+        font-family: inherit;
+      }
+
+      .publish-content {
+        min-height: 110px;
+        resize: vertical;
+      }
+
+      .publish-actions {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+      }
+
+      .news-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+        gap: 16px;
+      }
+
+      .news-card {
+        background: white;
+        border: 1px solid #eee;
+        border-radius: 12px;
+        padding: 18px;
+        transition: all 0.2s;
+      }
+
+      .news-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        transform: translateY(-1px);
+      }
+
+      .news-title {
+        margin: 0 0 8px;
+        font-size: 20px;
+        font-weight: 600;
+        color: #1a1a1a;
+        line-height: 1.35;
+      }
+
+      .news-meta {
+        font-size: 12px;
+        color: #888;
+        margin-bottom: 12px;
+        line-height: 1.5;
+      }
+
+      .news-content {
+        color: #444;
+        line-height: 1.75;
+        font-size: 14px;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: #999;
+        border: 1px dashed #ddd;
+        border-radius: 12px;
+        background: #fafafa;
+      }
+
+      .empty-state-icon {
+        font-size: 42px;
+        margin-bottom: 10px;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 40px;
+        color: #888;
+      }
+
+      @media (max-width: 768px) {
+        .news-container {
+          padding: 92px 14px 14px;
+        }
+
+        .page-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 10px;
+        }
+
+        .tools-row {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .news-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .news-top-title {
+          font-size: 22px;
+        }
+      }
+    </style>
 </head>
-<body>
-    <header>
-        <h1>留学信息发布</h1>
-        <div>
-            <button class="button" onclick="goBack()">返回控制台</button>
-            <button class="button" onclick="Auth.signOut(); location.href='index.html'">登出</button>
+<body class="dashboard-body news-page">
+    <div class="header-bar">
+      <div class="news-top-left">
+        <button class="top-back-button" onclick="goBack()">← 返回主页</button>
+        <div class="logo">A</div>
+        <h1 class="header-title">华南师范大学阿伯丁 数据科学与人工智能学院</h1>
+      </div>
+      <h1 class="news-top-title">留学信息发布</h1>
+      <div class="header-actions">
+        <div class="user-info">
+          <div class="user-avatar" id="user-avatar">U</div>
+          <span id="username">用户</span>
         </div>
-    </header>
-    
-    <main>
-        <section>
-            <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
-                <h2 style="margin:0;">最新留学信息</h2>
-                <button id="open-publish" class="button" style="display:none;" onclick="togglePublish(true)">✍️ 发布信息</button>
-            </div>
-            <div id="publish-panel" style="display:none; background:#fafafa; border:1px solid #eee; padding:12px; border-radius:8px; margin-top:12px;">
-                <div style="display:flex; gap:8px; align-items:center;">
-                    <input id="news-title" type="text" placeholder="标题（必填）" style="flex:0 0 280px; padding:8px;">
-                    <textarea id="news-content" placeholder="内容（必填）" rows="3" style="flex:1; padding:8px;"></textarea>
-                </div>
-                <div style="margin-top:8px; display:flex; gap:8px;">
-                    <button class="button" onclick="publishNews()">发布</button>
-                    <button class="button" onclick="togglePublish(false)">取消</button>
-                </div>
-            </div>
-            <div id="news-list" style="margin-top:12px;"></div>
-        </section>
-    </main>
+      </div>
+    </div>
+
+    <div class="news-container">
+      <div class="tools-row">
+        <div class="search-bar">
+          <input type="text" class="search-input" id="search-input" placeholder="搜索标题、内容、发布人..." />
+        </div>
+        <button id="open-publish" class="button" style="display:none;" onclick="togglePublish(true)">✍️ 发布信息</button>
+      </div>
+
+      <div id="publish-panel" class="publish-panel">
+        <div class="publish-form">
+          <input id="news-title" class="publish-title" type="text" placeholder="标题（必填）" />
+          <textarea id="news-content" class="publish-content" placeholder="内容（必填）"></textarea>
+          <div class="publish-actions">
+            <button class="button" onclick="togglePublish(false)">取消</button>
+            <button class="button" onclick="publishNews()">发布</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="news-list" class="loading">加载中...</div>
+    </div>
 
     <script src="./js/api.js"></script>
     <script src="./js/auth.js"></script>
     <script>
-        // 检查登录状态
-        if (!Auth.state.access) {
-            window.location.href = 'index.html';
+      let allNews = [];
+
+      document.addEventListener('DOMContentLoaded', async function() {
+        try {
+          await Auth.checkAuth();
+        } catch (err) {
+          alert('请先登录');
+          location.href = 'index.html';
+          return;
         }
 
-        function goBack() {
-            window.location.href = 'dashboard.html';
+        updateHeaderUser();
+
+        const isTeacher = Auth.state.role === 'teacher' || (Auth.state.userInfo && Auth.state.userInfo.role === 'teacher');
+        if (isTeacher) {
+          document.getElementById('open-publish').style.display = 'inline-flex';
         }
 
-        // 页面加载时获取最新信息
-        document.addEventListener('DOMContentLoaded', async function() {
-            const isTeacher = Auth.state.role === 'teacher' || (Auth.state.userInfo && Auth.state.userInfo.role === 'teacher');
-            if (isTeacher) {
-                document.getElementById('open-publish').style.display = 'inline-block';
-            }
-            await loadNews();
+        const searchInput = document.getElementById('search-input');
+        searchInput.addEventListener('input', handleSearch);
+
+        await loadNews();
+      });
+
+      function goBack() {
+        location.href = 'dashboard.html';
+      }
+
+      function updateHeaderUser() {
+        const user = Auth.state.user || Auth.state.userInfo || {};
+        const name = user.name || user.email || (Auth.state.role === 'teacher' ? '教师' : '用户');
+        const username = document.getElementById('username');
+        const avatar = document.getElementById('user-avatar');
+        if (username) username.textContent = name;
+        if (avatar) avatar.textContent = name.charAt(0).toUpperCase();
+      }
+
+      function togglePublish(show) {
+        document.getElementById('publish-panel').style.display = show ? 'block' : 'none';
+      }
+
+      async function loadNews() {
+        const list = document.getElementById('news-list');
+        list.className = 'loading';
+        list.innerHTML = '加载中...';
+
+        try {
+          const items = await API.get('/api/news');
+          allNews = Array.isArray(items) ? items : [];
+          renderNews(allNews);
+        } catch (err) {
+          list.className = '';
+          list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">⚠️</div><div>加载失败：${escapeHTML(err.message || '请稍后重试')}</div></div>`;
+        }
+      }
+
+      function handleSearch(e) {
+        const keyword = (e.target.value || '').toLowerCase().trim();
+        if (!keyword) {
+          renderNews(allNews);
+          return;
+        }
+
+        const filtered = allNews.filter((item) => {
+          const title = (item.title || '').toLowerCase();
+          const content = (item.content || '').toLowerCase();
+          const author = (item.author_name || '').toLowerCase();
+          return title.includes(keyword) || content.includes(keyword) || author.includes(keyword);
         });
 
-        function togglePublish(show) {
-            document.getElementById('publish-panel').style.display = show ? 'block' : 'none';
+        renderNews(filtered);
+      }
+
+      function renderNews(items) {
+        const list = document.getElementById('news-list');
+
+        if (!items || items.length === 0) {
+          list.className = '';
+          list.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">📰</div>
+              <div>暂无符合条件的留学信息</div>
+            </div>
+          `;
+          return;
         }
 
-        async function loadNews() {
-            const list = document.getElementById('news-list');
-            list.innerHTML = '<div style="padding:12px; color:#666;">加载中...</div>';
-            try {
-                const items = await API.get('/api/news');
-                if (!Array.isArray(items) || items.length === 0) {
-                    list.innerHTML = '<div style="padding:24px; color:#888; text-align:center;">暂无信息</div>';
-                    return;
-                }
-                list.innerHTML = items.map(n => `
-                    <div class="news-item" style="border: 1px solid #eee; padding: 14px; margin: 10px 0; border-radius: 8px; background:#fff;">
-                        <h3 style="margin:0 0 6px;">${escapeHTML(n.title)}</h3>
-                        <div style="color:#999; font-size:12px; margin-bottom:8px;">
-                            ${n.author_name ? `<span>发布人：${escapeHTML(n.author_name)}</span> · ` : ''}
-                            <span>发布于 ${formatDate(n.created_at)}</span>
-                            ${n.updated_at && n.updated_at !== n.created_at ? ` · <span>更新于 ${formatDate(n.updated_at)}</span>` : ''}
-                        </div>
-                        <div style="white-space:pre-wrap; line-height:1.6;">${escapeHTML(n.content)}</div>
-                    </div>
-                `).join('');
-            } catch (err) {
-                list.innerHTML = `<div style="padding:12px; color:#e74c3c;">加载失败：${err.message || '请稍后重试'}</div>`;
-            }
+        list.className = 'news-grid';
+        list.innerHTML = items.map((n) => `
+          <article class="news-card">
+            <h3 class="news-title">${escapeHTML(n.title)}</h3>
+            <div class="news-meta">
+              ${n.author_name ? `<span>发布人：${escapeHTML(n.author_name)}</span> · ` : ''}
+              <span>发布于 ${formatDate(n.created_at)}</span>
+              ${n.updated_at && n.updated_at !== n.created_at ? ` · <span>更新于 ${formatDate(n.updated_at)}</span>` : ''}
+            </div>
+            <div class="news-content">${escapeHTML(n.content)}</div>
+          </article>
+        `).join('');
+      }
+
+      async function publishNews() {
+        const titleEl = document.getElementById('news-title');
+        const contentEl = document.getElementById('news-content');
+        const title = titleEl.value.trim();
+        const content = contentEl.value.trim();
+
+        if (!title || !content) {
+          alert('请填写标题和内容');
+          return;
         }
 
-        async function publishNews() {
-            const titleEl = document.getElementById('news-title');
-            const contentEl = document.getElementById('news-content');
-            const title = titleEl.value.trim();
-            const content = contentEl.value.trim();
-            
-            console.log('准备发布:', { title, content });
-            
-            if (!title || !content) {
-                alert('请填写标题和内容');
-                return;
-            }
-            
-            if (!Auth.state.access) {
-                alert('未登录或登录已过期，请重新登录');
-                window.location.href = 'index.html';
-                return;
-            }
-            
-            try {
-                console.log('发送请求到 /api/news');
-                const result = await API.post('/api/news', { title, content }, {
-                    headers: { Authorization: `Bearer ${Auth.state.access}` },
-                });
-                console.log('发布成功:', result);
-                titleEl.value = '';
-                contentEl.value = '';
-                togglePublish(false);
-                await loadNews();
-                alert('发布成功！');
-            } catch (err) {
-                console.error('发布失败:', err);
-                const errorMsg = err.error || err.message || '发布失败，请稍后重试';
-                alert('发布失败：' + errorMsg);
-            }
+        try {
+          await API.post('/api/news', { title, content }, {
+            headers: { Authorization: `Bearer ${Auth.state.access}` },
+          });
+          titleEl.value = '';
+          contentEl.value = '';
+          togglePublish(false);
+          await loadNews();
+          const searchInput = document.getElementById('search-input');
+          if (searchInput && searchInput.value.trim()) {
+            handleSearch({ target: searchInput });
+          }
+          alert('发布成功');
+        } catch (err) {
+          alert('发布失败：' + (err.error || err.message || '请稍后重试'));
         }
+      }
 
-        function formatDate(iso) {
-            try { return new Date(iso).toLocaleString('zh-CN'); } catch { return iso || ''; }
+      function formatDate(iso) {
+        try {
+          return new Date(iso).toLocaleString('zh-CN');
+        } catch {
+          return iso || '';
         }
-        function escapeHTML(str) {
-            return (str || '')
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
-        }
+      }
+
+      function escapeHTML(str) {
+        return (str || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
     </script>
 </body>
 </html>
-

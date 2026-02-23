@@ -1,10 +1,30 @@
-from flask import Blueprint, jsonify, request
+import mimetypes
+import os
+from flask import Blueprint, jsonify, request, send_file, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from ..extensions import db, csrf
 from ..models import User
 from ..models.document import Document
 
 bp = Blueprint("users", __name__, url_prefix="/api/users")
+
+
+def resolve_document_path(path: str | None) -> str | None:
+    """Resolve legacy/relocated document path to an existing file."""
+    if not path:
+        return None
+    if os.path.exists(path):
+        return path
+
+    # Fallback: use current instance/uploads + basename for migrated workspace roots.
+    basename = os.path.basename(path)
+    if not basename:
+        return None
+
+    candidate = os.path.join(current_app.instance_path, "uploads", basename)
+    if os.path.exists(candidate):
+        return candidate
+    return None
 
 
 @bp.get("/me")
@@ -158,3 +178,42 @@ def get_student_detail(student_id):
         "documents": documents_data,
         "document_count": len(documents_data),
     })
+
+
+@bp.get("/students/<int:student_id>/documents/<int:document_id>/view")
+@jwt_required()
+@csrf.exempt
+def view_student_document(student_id: int, document_id: int):
+    """教师查看学生上传的文档内容（在线预览）。"""
+    ident = get_jwt_identity()
+    current_user = User.query.get(int(ident)) if ident is not None else None
+    if not current_user:
+        return jsonify({"message": "未找到用户"}), 404
+
+    if current_user.role != "teacher":
+        return jsonify({"message": "权限不足，仅教师可访问"}), 403
+
+    student = User.query.get(student_id)
+    if not student or student.role != "student":
+        return jsonify({"message": "未找到该学生"}), 404
+
+    doc = Document.query.filter_by(id=document_id, user_id=student_id).first()
+    if not doc:
+        return jsonify({"message": "文档不存在"}), 404
+
+    resolved_path = resolve_document_path(doc.file_path)
+    if not resolved_path:
+        return jsonify({"message": "文件不存在"}), 404
+
+    # Auto-heal stale absolute paths in database.
+    if doc.file_path != resolved_path:
+        doc.file_path = resolved_path
+        db.session.commit()
+
+    mime_type, _ = mimetypes.guess_type(doc.original_name or doc.name or "")
+    return send_file(
+        resolved_path,
+        as_attachment=False,
+        download_name=doc.original_name or doc.name,
+        mimetype=mime_type or "application/octet-stream",
+    )

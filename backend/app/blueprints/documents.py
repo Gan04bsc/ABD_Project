@@ -18,6 +18,21 @@ def allowed_file(filename):
 def get_file_extension(filename):
     return filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
 
+
+def resolve_document_path(path: str | None) -> str | None:
+    """Resolve legacy absolute path to current instance uploads path if needed."""
+    if not path:
+        return None
+    if os.path.exists(path):
+        return path
+    basename = os.path.basename(path)
+    if not basename:
+        return None
+    candidate = os.path.join(current_app.instance_path, 'uploads', basename)
+    if os.path.exists(candidate):
+        return candidate
+    return None
+
 @bp.get("")
 @bp.get("/")
 @jwt_required()
@@ -124,14 +139,19 @@ def view_document(document_id):
     if not document:
         return jsonify({"message": "文档不存在"}), 404
     
-    if not os.path.exists(document.file_path):
+    resolved_path = resolve_document_path(document.file_path)
+    if not resolved_path:
         return jsonify({"message": "文件不存在"}), 404
+
+    if document.file_path != resolved_path:
+        document.file_path = resolved_path
+        db.session.commit()
     
     # 根据文件类型设置正确的 MIME 类型
     mime_type = get_mime_type(document.file_type)
     
     return send_file(
-        document.file_path,
+        resolved_path,
         as_attachment=False,  # 不强制下载
         mimetype=mime_type
     )
@@ -146,14 +166,19 @@ def download_document(document_id):
     if not document:
         return jsonify({"message": "文档不存在"}), 404
     
-    if not os.path.exists(document.file_path):
+    resolved_path = resolve_document_path(document.file_path)
+    if not resolved_path:
         return jsonify({"message": "文件不存在"}), 404
+
+    if document.file_path != resolved_path:
+        document.file_path = resolved_path
+        db.session.commit()
     
     # 根据文件类型设置正确的 MIME 类型
     mime_type = get_mime_type(document.file_type)
     
     return send_file(
-        document.file_path,
+        resolved_path,
         as_attachment=True,  # 强制下载
         download_name=document.original_name,
         mimetype=mime_type
@@ -223,8 +248,9 @@ def delete_document(document_id):
     
     try:
         # 删除物理文件
-        if os.path.exists(document.file_path):
-            os.remove(document.file_path)
+        resolved_path = resolve_document_path(document.file_path)
+        if resolved_path and os.path.exists(resolved_path):
+            os.remove(resolved_path)
         
         # 删除数据库记录
         db.session.delete(document)

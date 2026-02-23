@@ -3,20 +3,72 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>个人资料管理 - Study Abroad</title>
+    <title>个人资料管理 - 阿伯丁留学服务平台</title>
     <link rel="stylesheet" href="./styles/styles.css" />
+    <style>
+      .profile-container {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 96px 24px 24px;
+        box-sizing: border-box;
+      }
+
+      .profile-page {
+        background: #ffffff !important;
+        min-height: 100vh;
+      }
+
+      .top-back-button {
+        padding: 8px 14px;
+        background: #f1f4fb;
+        border: 1px solid #dbe3f5;
+        border-radius: 18px;
+        cursor: pointer;
+        font-size: 13px;
+        color: #4b5f86;
+        transition: all 0.2s;
+      }
+
+      .top-back-button:hover {
+        background: #e7eefc;
+      }
+
+      .profile-section {
+        background: #fff;
+        border: 1px solid #e8edf7;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 18px;
+      }
+
+      .profile-section h2 {
+        margin: 0 0 16px;
+      }
+
+      #profile-form {
+        max-width: none;
+      }
+    </style>
 </head>
-<body>
-    <header>
-        <h1>个人资料管理</h1>
-        <div>
-            <button class="button" onclick="goBack()">返回控制台</button>
+<body class="dashboard-body profile-page">
+    <div class="header-bar">
+        <div class="logo-section">
+            <button class="top-back-button" onclick="goBack()">← 返回主页</button>
+            <div class="logo">A</div>
+            <h1 class="header-title">华南师范大学阿伯丁 数据科学与人工智能学院</h1>
+        </div>
+        <div class="header-actions">
+            <div class="user-info">
+                <div class="user-avatar" id="profile-avatar">U</div>
+                <span id="profile-username">用户</span>
+            </div>
             <button class="button" onclick="Auth.signOut(); location.href='index.html'">登出</button>
         </div>
-    </header>
+    </div>
     
-    <main>
-        <section>
+    <main class="profile-container">
+        <section class="profile-section">
             <h2>编辑个人资料</h2>
             <form id="profile-form" onsubmit="return saveProfile(event)">
                 <div>
@@ -42,7 +94,7 @@
             </form>
         </section>
 
-        <section style="margin-top: 40px;">
+        <section class="profile-section">
             <h2>文件管理</h2>
             
             <!-- 文件上传区域 -->
@@ -450,6 +502,12 @@
 
         // 页面加载时自动加载用户资料和文件列表
         document.addEventListener('DOMContentLoaded', async () => {
+            const userInfo = Auth.state.userInfo || {};
+            const displayName = userInfo.name || userInfo.email || '用户';
+            const nameEl = document.getElementById('profile-username');
+            const avatarEl = document.getElementById('profile-avatar');
+            if (nameEl) nameEl.textContent = displayName;
+            if (avatarEl) avatarEl.textContent = displayName.charAt(0).toUpperCase();
             await loadProfile();
             await loadFiles();
         });

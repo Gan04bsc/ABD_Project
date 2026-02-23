@@ -205,15 +205,58 @@ function renderStudentDetail(data) {
   } else {
     docsList.innerHTML = documents.map(doc => `
       <div class="document-item">
-        <div class="document-icon">${getFileIcon(doc.file_type)}</div>
-        <div class="document-info">
-          <div class="document-name">${escapeHtml(doc.name)}</div>
-          <div class="document-meta">
-            ${escapeHtml(doc.category)} · ${formatFileSize(doc.file_size)} · ${formatDateTime(doc.created_at)}
+        <div style="display:flex; align-items:center; flex:1; min-width:0;">
+          <div class="document-icon">${getFileIcon(doc.file_type)}</div>
+          <div class="document-info">
+            <div class="document-name">${escapeHtml(doc.name)}</div>
+            <div class="document-meta">
+              ${escapeHtml(doc.category)} · ${formatFileSize(doc.file_size)} · ${formatDateTime(doc.created_at)}
+            </div>
           </div>
         </div>
+        <button
+          class="button"
+          style="padding:6px 12px; font-size:12px;"
+          onclick="event.stopPropagation(); viewStudentDocument(${student.id}, ${doc.id})"
+        >
+          查看
+        </button>
       </div>
     `).join('');
+  }
+}
+
+// 教师查看学生文档
+async function viewStudentDocument(studentId, documentId) {
+  try {
+    let response = await fetch(`http://127.0.0.1:5000/api/users/students/${studentId}/documents/${documentId}/view`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${Auth.state.access}`
+      }
+    });
+
+    if (response.status === 401) {
+      await Auth.refresh();
+      response = await fetch(`http://127.0.0.1:5000/api/users/students/${studentId}/documents/${documentId}/view`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${Auth.state.access}`
+        }
+      });
+    }
+
+    if (!response.ok) {
+      throw new Error(`查看失败: ${response.statusText}`);
+    }
+
+    const blob = await response.blob();
+    const fileUrl = window.URL.createObjectURL(blob);
+    window.open(fileUrl, '_blank', 'noopener');
+    setTimeout(() => window.URL.revokeObjectURL(fileUrl), 60 * 1000);
+  } catch (error) {
+    console.error('查看学生文档失败:', error);
+    alert('查看文档失败：' + (error.message || '请稍后重试'));
   }
 }
 
