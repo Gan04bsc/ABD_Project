@@ -6,6 +6,54 @@ from .config import get_config
 from .extensions import db, migrate, jwt, cors, csrf, socketio
 
 
+def ensure_test_accounts(app: Flask) -> None:
+    """Ensure quick-fill test accounts exist for local/demo usage."""
+    from .models import User
+
+    default_accounts = [
+        {
+            "email": "student@test.com",
+            "name": "Student Test",
+            "role": "student",
+            "password": "123456",
+        },
+        {
+            "email": "teacher@test.com",
+            "name": "Teacher Test",
+            "role": "teacher",
+            "password": "123456",
+        },
+    ]
+
+    with app.app_context():
+        changed = False
+        for item in default_accounts:
+            user = User.query.filter_by(email=item["email"]).first()
+            if user is None:
+                user = User(
+                    email=item["email"],
+                    name=item["name"],
+                    role=item["role"],
+                )
+                user.set_password(item["password"])
+                db.session.add(user)
+                changed = True
+                continue
+
+            # Keep quick-fill credentials stable for demo accounts only.
+            if user.role != item["role"]:
+                user.role = item["role"]
+                changed = True
+            if user.name != item["name"]:
+                user.name = item["name"]
+                changed = True
+            user.set_password(item["password"])
+            changed = True
+
+        if changed:
+            db.session.commit()
+
+
 def register_blueprints(app: Flask) -> None:
     """Import and register all blueprints here to avoid circular imports."""
     from .blueprints.auth import bp as auth_bp
@@ -57,6 +105,9 @@ def create_app(config_name: str | None = None) -> Flask:
     # 不启用CSRF保护，因为使用JWT认证
     # csrf.init_app(app)
     socketio.init_app(app, cors_allowed_origins=app.config.get("CORS_ORIGINS", ["*"]))
+
+    # Ensure local test users can always log in from the quick-fill buttons.
+    ensure_test_accounts(app)
 
     # Simple health check
     @app.get("/health")
