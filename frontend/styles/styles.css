@@ -1678,6 +1678,7 @@ textarea.form-input:focus {
 .brand-cn {
   font-size: 13px;
   font-weight: 700;
+  color: #000;
   letter-spacing: 0.2px;
   white-space: nowrap;
   overflow: hidden;
@@ -1686,7 +1687,7 @@ textarea.form-input:focus {
 
 .brand-en {
   font-size: 11px;
-  color: #4d5e78;
+  color: #000;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
